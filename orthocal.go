@@ -7,7 +7,7 @@ import (
 
 // Pascha functions
 
-// Compute the Julian date of Pascha given the year
+// Compute the Julian date of Pascha for the given year
 func ComputeJulianPascha(year int) (int, int) {
 	// Use the Meeus Julian algorithm to calculate the Julian date
 	// See https://en.wikipedia.org/wiki/Computus#Meeus'_Julian_algorithm
@@ -21,13 +21,13 @@ func ComputeJulianPascha(year int) (int, int) {
 	return month, day
 }
 
-// Compute the Julian day number of Pascha given the year
+// Compute the Julian day number of Pascha for the given year
 func ComputeJulianDayPascha(year int) int {
 	month, day := ComputeJulianPascha(year)
 	return JulianDateToJulianDay(year, month, day)
 }
 
-// Compute the Gregorian date of Pascha given the year
+// Compute the Gregorian date of Pascha for the given year
 func ComputeGregorianPascha(year int) (time.Time, error) {
 	month, day := ComputeJulianPascha(year)
 	gregorianDate, e := JulianToGregorian(year, month, day)
