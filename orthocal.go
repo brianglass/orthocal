@@ -64,3 +64,8 @@ func ConvertJulianToGregorian(year, month, day int) (time.Time, error) {
 	julianDate := time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.Local)
 	return julianDate.AddDate(0, 0, 13), nil
 }
+
+func JulianDateToJulianDay(year, month, day int) int {
+	// See https://en.wikipedia.org/wiki/Julian_day#Converting_Julian_calendar_date_to_Julian_Day_Number
+	return 367*year - (7*(year+5001+(month-9)/7))/4 + (275*month)/9 + day + 1729777
+}

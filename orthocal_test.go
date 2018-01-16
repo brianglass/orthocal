@@ -101,3 +101,11 @@ func TestConvertJulianToGregorianInvalid(t *testing.T) {
 		t.Errorf("ConvertJulianToGregory should return an error when dates are out of range")
 	}
 }
+
+func TestJulianDatetoJulianDay(t *testing.T) {
+	expected := 2455676
+	actual := orthocal.JulianDateToJulianDay(2011, 4, 11)
+	if actual != expected {
+		t.Errorf("GregorianDateToJulianDay returned %d but should have returned %d", actual, expected)
+	}
+}
