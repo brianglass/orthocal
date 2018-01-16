@@ -5,20 +5,20 @@ import (
 	"time"
 )
 
-func GregorianDateToJulianDay(gregorianDay time.Time) int {
+func GregorianDateToJulianDay(gregorianDate time.Time) int {
 	// This function mimic's PHP's gregoriantojd()
 
 	// month is an integer from 1-12
 	// day is an integer from 1-31
 	// year is an integer from -4714 and 9999
 
-	year, month, day := gregorianDay.Date()
+	year, month, day := gregorianDate.Date()
 
 	if month > 2 {
 		month -= 3
 	} else {
 		month += 9
-		year -= 1
+		year--
 	}
 
 	// break up the year into the leftmost 2 digits (century) and the rightmost 2 digits
@@ -43,20 +43,20 @@ func ComputeJulianPascha(year int) (int, int) {
 
 func ComputeGregorianPascha(year int) (time.Time, error) {
 	month, day := ComputeJulianPascha(year)
-	gregorianDate, e := ConvertJulianToGregorian(month, day, year)
+	gregorianDate, e := ConvertJulianToGregorian(year, month, day)
 	if e != nil {
 		return time.Now(), e
 	}
 	return gregorianDate, nil
 }
 
-func ConvertJulianToGregorian(month, day, year int) (time.Time, error) {
-	// This will be incorrect outside the range 1901-2099 for 2 reasons:
-	// 1. The offset of 13 is incorrect outside this range.
+func ConvertJulianToGregorian(year, month, day int) (time.Time, error) {
+	// This will be incorrect outside the range 2001-2099 for 2 reasons:
+	// 1. The offset of 13 is incorrect outside the range 1900-2099.
 	// 2. if the Julian date is in February and on a year that is divisible by
 	//    100, the Go time module will incorrectly add the offset because these years
 	//    are leap years on the Julian, but not on the Gregorian.
-	if year < 1901 || year > 2099 {
+	if year < 2001 || year > 2099 {
 		return time.Now(), errors.New("The year must be between 1900 and 2099")
 	}
 
