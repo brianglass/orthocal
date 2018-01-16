@@ -70,7 +70,7 @@ func TestComputeJulianPascha(t *testing.T) {
 
 func TestConvertJulianToGregorian(t *testing.T) {
 	expected := time.Date(2008, 4, 27, 0, 0, 0, 0, time.Local)
-	actual, e := orthocal.ConvertJulianToGregorian(2008, 4, 14)
+	actual, e := orthocal.JulianToGregorian(2008, 4, 14)
 	if e != nil {
 		t.Fatalf("ConvertJulianToGregory return error: %#n", e)
 	}
@@ -80,7 +80,7 @@ func TestConvertJulianToGregorian(t *testing.T) {
 	}
 
 	expected = time.Date(2011, 4, 24, 0, 0, 0, 0, time.Local)
-	actual, e = orthocal.ConvertJulianToGregorian(2011, 4, 11)
+	actual, e = orthocal.JulianToGregorian(2011, 4, 11)
 	if e != nil {
 		t.Fatalf("ConvertJulianToGregory return error: %#n", e)
 	}
@@ -91,12 +91,12 @@ func TestConvertJulianToGregorian(t *testing.T) {
 }
 
 func TestConvertJulianToGregorianInvalid(t *testing.T) {
-	_, e := orthocal.ConvertJulianToGregorian(2100, 4, 14)
+	_, e := orthocal.JulianToGregorian(2100, 4, 14)
 	if e == nil {
 		t.Errorf("ConvertJulianToGregory should return an error when dates are out of range")
 	}
 
-	_, e = orthocal.ConvertJulianToGregorian(1900, 4, 14)
+	_, e = orthocal.JulianToGregorian(1900, 4, 14)
 	if e == nil {
 		t.Errorf("ConvertJulianToGregory should return an error when dates are out of range")
 	}
@@ -107,5 +107,13 @@ func TestJulianDatetoJulianDay(t *testing.T) {
 	actual := orthocal.JulianDateToJulianDay(2011, 4, 11)
 	if actual != expected {
 		t.Errorf("GregorianDateToJulianDay returned %d but should have returned %d", actual, expected)
+	}
+}
+
+func TestComputJulianDayPascha(t *testing.T) {
+	expected := 2455676
+	actual := orthocal.ComputeJulianDayPascha(2011)
+	if actual != expected {
+		t.Errorf("ComputJulianDayPascha returned %d but should have returned %d", actual, expected)
 	}
 }
