@@ -7,6 +7,7 @@ import (
 
 // Pascha functions
 
+// Compute the Julian date of Pascha given the year
 func ComputeJulianPascha(year int) (int, int) {
 	// Use the Meeus Julian algorithm to calculate the Julian date
 	// See https://en.wikipedia.org/wiki/Computus#Meeus'_Julian_algorithm
@@ -20,11 +21,13 @@ func ComputeJulianPascha(year int) (int, int) {
 	return month, day
 }
 
+// Compute the Julian day number of Pascha given the year
 func ComputeJulianDayPascha(year int) int {
 	month, day := ComputeJulianPascha(year)
 	return JulianDateToJulianDay(year, month, day)
 }
 
+// Compute the Gregorian date of Pascha given the year
 func ComputeGregorianPascha(year int) (time.Time, error) {
 	month, day := ComputeJulianPascha(year)
 	gregorianDate, e := JulianToGregorian(year, month, day)
@@ -36,6 +39,7 @@ func ComputeGregorianPascha(year int) (time.Time, error) {
 
 // Conversion functions
 
+// Convert a Julian date to a Gregorian date
 func JulianToGregorian(year, month, day int) (time.Time, error) {
 	// This will be incorrect outside the range 2001-2099 for 2 reasons:
 	// 1. The offset of 13 is incorrect outside the range 1900-2099.
@@ -51,11 +55,13 @@ func JulianToGregorian(year, month, day int) (time.Time, error) {
 	return julianDate.AddDate(0, 0, 13), nil
 }
 
+// Convert a Julian date to a Julian day number
 func JulianDateToJulianDay(year, month, day int) int {
 	// See https://en.wikipedia.org/wiki/Julian_day#Converting_Julian_calendar_date_to_Julian_Day_Number
 	return 367*year - (7*(year+5001+(month-9)/7))/4 + (275*month)/9 + day + 1729777
 }
 
+// Convert a Gregorian date to a Julian day number
 func GregorianDateToJulianDay(gregorianDate time.Time) int {
 	// This function mimic's PHP's gregoriantojd()
 
