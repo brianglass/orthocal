@@ -1,3 +1,4 @@
+// Orthocal provides tools for the Orthodox calendar.
 package orthocal
 
 import (
@@ -7,7 +8,7 @@ import (
 
 // Pascha functions
 
-// Compute the Julian date of Pascha for the given year
+// Compute the Julian date of Pascha for the given year.
 func ComputeJulianPascha(year int) (int, int) {
 	// Use the Meeus Julian algorithm to calculate the Julian date
 	// See https://en.wikipedia.org/wiki/Computus#Meeus'_Julian_algorithm
@@ -21,31 +22,54 @@ func ComputeJulianPascha(year int) (int, int) {
 	return month, day
 }
 
-// Compute the Julian day number of Pascha for the given year
+// Compute the Julian day number of Pascha for the given year.
 func ComputeJulianDayPascha(year int) int {
 	month, day := ComputeJulianPascha(year)
 	return JulianDateToJulianDay(year, month, day)
 }
 
-// Compute the Gregorian date of Pascha for the given year
+// Compute the Gregorian date of Pascha for the given year.
+// The year must be between 2001 and 2099.
 func ComputeGregorianPascha(year int) (time.Time, error) {
 	month, day := ComputeJulianPascha(year)
+
 	gregorianDate, e := JulianToGregorian(year, month, day)
 	if e != nil {
 		return time.Now(), e
 	}
+
 	return gregorianDate, nil
+}
+
+// Compute the distance of a given day from Pascha. Returns the distance and the year.
+// If the distance is < -77, the returned year will be earlier than the one passed in.
+func ComputePaschaDistance(date time.Time) (int, int) {
+	year := date.Year()
+
+	julianDay := GregorianDateToJulianDay(date)
+	distance := julianDay - ComputeJulianDayPascha(year)
+
+	if distance < -77 {
+		year--
+		distance = julianDay - ComputeJulianDayPascha(year)
+	}
+
+	return distance, year
 }
 
 // Conversion functions
 
-// Convert a Julian date to a Gregorian date
+// Convert a Julian date to a Gregorian date.
 func JulianToGregorian(year, month, day int) (time.Time, error) {
-	// This will be incorrect outside the range 2001-2099 for 2 reasons:
+	// This function will be incorrect outside the range 2001-2099 for 2 reasons:
+	//
 	// 1. The offset of 13 is incorrect outside the range 1900-2099.
-	// 2. if the Julian date is in February and on a year that is divisible by
+	// 2. If the Julian date is in February and on a year that is divisible by
 	//    100, the Go time module will incorrectly add the offset because these years
 	//    are leap years on the Julian, but not on the Gregorian.
+	//
+	// Hopefully this code will no longer be running by 2100.
+
 	if year < 2001 || year > 2099 {
 		return time.Now(), errors.New("The year must be between 1900 and 2099")
 	}
@@ -55,20 +79,15 @@ func JulianToGregorian(year, month, day int) (time.Time, error) {
 	return julianDate.AddDate(0, 0, 13), nil
 }
 
-// Convert a Julian date to a Julian day number
+// Convert a Julian date to a Julian day number.
 func JulianDateToJulianDay(year, month, day int) int {
 	// See https://en.wikipedia.org/wiki/Julian_day#Converting_Julian_calendar_date_to_Julian_Day_Number
 	return 367*year - (7*(year+5001+(month-9)/7))/4 + (275*month)/9 + day + 1729777
 }
 
-// Convert a Gregorian date to a Julian day number
+// Convert a Gregorian date to a Julian day number.
+// This function mimic's PHP's gregoriantojd().
 func GregorianDateToJulianDay(gregorianDate time.Time) int {
-	// This function mimic's PHP's gregoriantojd()
-
-	// month is an integer from 1-12
-	// day is an integer from 1-31
-	// year is an integer from -4714 and 9999
-
 	year, month, day := gregorianDate.Date()
 
 	if month > 2 {

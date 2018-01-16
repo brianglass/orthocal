@@ -117,3 +117,25 @@ func TestComputJulianDayPascha(t *testing.T) {
 		t.Errorf("ComputJulianDayPascha returned %d but should have returned %d", actual, expected)
 	}
 }
+
+func TestComputePaschaDistance(t *testing.T) {
+	date := time.Date(2018, 5, 9, 0, 0, 0, 0, time.Local)
+	distance, year := orthocal.ComputePaschaDistance(date)
+	expectedDistance, expectedYear := 31, 2018
+	if distance != expectedDistance {
+		t.Errorf("ComputePaschaDistance returned %d for the distance but should have returned %d", distance, expectedDistance)
+	}
+	if year != expectedYear {
+		t.Errorf("ComputePaschaDistance returned %d for the year but should have returned %d", year, expectedYear)
+	}
+
+	date = time.Date(2018, 1, 1, 0, 0, 0, 0, time.Local)
+	distance, year = orthocal.ComputePaschaDistance(date)
+	expectedDistance, expectedYear = 260, 2017
+	if distance != expectedDistance {
+		t.Errorf("ComputePaschaDistance returned %d for the distance but should have returned %d", distance, expectedDistance)
+	}
+	if year != expectedYear {
+		t.Errorf("ComputePaschaDistance returned %d for the year but should have returned %d", year, expectedYear)
+	}
+}
