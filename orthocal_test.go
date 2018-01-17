@@ -139,3 +139,12 @@ func TestComputePaschaDistance(t *testing.T) {
 		t.Errorf("ComputePaschaDistance returned %d for the year but should have returned %d", year, expectedYear)
 	}
 }
+
+func TestDayOfWeekFromDistance(t *testing.T) {
+	distance := 31
+	expected := time.Wednesday
+	actual := orthocal.DayOfWeekFromDistance(distance)
+	if actual != expected {
+		t.Errorf("DayOfWeekFromDistance returned %s for the day but should have returned %s", actual, expected)
+	}
+}

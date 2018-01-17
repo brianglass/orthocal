@@ -57,6 +57,12 @@ func ComputePaschaDistance(date time.Time) (int, int) {
 	return distance, year
 }
 
+// Return the day of the week given the distance from Pascha.
+func DayOfWeekFromDistance(distance int) time.Weekday {
+	ordinal := (7 + distance%7) % 7
+	return time.Weekday(ordinal)
+}
+
 // Conversion functions
 
 // Convert a Julian date to a Gregorian date.
