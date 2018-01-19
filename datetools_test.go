@@ -20,19 +20,17 @@ var fixture_julian_pascha = []time.Time{
 	time.Date(2011, 4, 11, 0, 0, 0, 0, time.Local),
 }
 
-func TestGregorianDateToJulianDay(t *testing.T) {
-	julianDate := time.Date(2018, time.Month(1), 15, 0, 0, 0, 0, time.Local)
-	actual := orthocal.GregorianDateToJulianDay(julianDate)
+func TestGregorianDateToJDN(t *testing.T) {
+	actual := orthocal.GregorianDateToJDN(2018, 1, 15)
 	expected := 2458134
 	if actual != expected {
-		t.Fatalf("GregorianDateToJulianDay should have returned %d but returned %d", expected, actual)
+		t.Fatalf("GregorianDateToJDN should have returned %d but returned %d", expected, actual)
 	}
 
-	julianDate = time.Date(2000, time.Month(5), 29, 0, 0, 0, 0, time.Local)
-	actual = orthocal.GregorianDateToJulianDay(julianDate)
+	actual = orthocal.GregorianDateToJDN(2000, 5, 29)
 	expected = 2451694
 	if actual != expected {
-		t.Fatalf("GregorianDateToJulianDay should have returned %d but returned %d", expected, actual)
+		t.Fatalf("GregorianDateToJDN should have returned %d but returned %d", expected, actual)
 	}
 }
 
@@ -102,25 +100,24 @@ func TestConvertJulianToGregorianInvalid(t *testing.T) {
 	}
 }
 
-func TestJulianDatetoJulianDay(t *testing.T) {
+func TestJulianDatetoJDN(t *testing.T) {
 	expected := 2455676
-	actual := orthocal.JulianDateToJulianDay(2011, 4, 11)
+	actual := orthocal.JulianDateToJDN(2011, 4, 11)
 	if actual != expected {
-		t.Errorf("GregorianDateToJulianDay returned %d but should have returned %d", actual, expected)
+		t.Errorf("JulianDateToJDN returned %d but should have returned %d", actual, expected)
 	}
 }
 
-func TestComputJulianDayPascha(t *testing.T) {
+func TestComputJDNPascha(t *testing.T) {
 	expected := 2455676
-	actual := orthocal.ComputeJulianDayPascha(2011)
+	actual := orthocal.ComputePaschaJDN(2011)
 	if actual != expected {
-		t.Errorf("ComputJulianDayPascha returned %d but should have returned %d", actual, expected)
+		t.Errorf("ComputJDNPascha returned %d but should have returned %d", actual, expected)
 	}
 }
 
 func TestComputePaschaDistance(t *testing.T) {
-	date := time.Date(2018, 5, 9, 0, 0, 0, 0, time.Local)
-	distance, year := orthocal.ComputePaschaDistance(date)
+	distance, year := orthocal.ComputePaschaDistance(2018, 5, 9)
 	expectedDistance, expectedYear := 31, 2018
 	if distance != expectedDistance {
 		t.Errorf("ComputePaschaDistance returned %d for the distance but should have returned %d", distance, expectedDistance)
@@ -129,8 +126,7 @@ func TestComputePaschaDistance(t *testing.T) {
 		t.Errorf("ComputePaschaDistance returned %d for the year but should have returned %d", year, expectedYear)
 	}
 
-	date = time.Date(2018, 1, 1, 0, 0, 0, 0, time.Local)
-	distance, year = orthocal.ComputePaschaDistance(date)
+	distance, year = orthocal.ComputePaschaDistance(2018, 1, 1)
 	expectedDistance, expectedYear = 260, 2017
 	if distance != expectedDistance {
 		t.Errorf("ComputePaschaDistance returned %d for the distance but should have returned %d", distance, expectedDistance)
@@ -140,11 +136,11 @@ func TestComputePaschaDistance(t *testing.T) {
 	}
 }
 
-func TestDayOfWeekFromDistance(t *testing.T) {
+func TestWeekDayFromPDist(t *testing.T) {
 	distance := 31
-	expected := time.Wednesday
-	actual := orthocal.DayOfWeekFromDistance(distance)
+	expected := orthocal.Wednesday
+	actual := orthocal.WeekDayFromPDist(distance)
 	if actual != expected {
-		t.Errorf("DayOfWeekFromDistance returned %s for the day but should have returned %s", actual, expected)
+		t.Errorf("WeekDayFromPDist returned %s for the day but should have returned %s", actual, expected)
 	}
 }

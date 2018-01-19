@@ -1,9 +1,25 @@
-// Orthocal provides tools for the Orthodox calendar.
+/*
+	Orthocal provides tools for the Orthodox calendar.
+
+	Most calculations are done with the Julian Day Number, which we abbreviate
+	to JDN or the distance from Pascha in days, which we abbreviate pdist.
+*/
+
 package orthocal
 
 import (
 	"errors"
 	"time"
+)
+
+const (
+	Sunday = iota
+	Monday
+	Tuesday
+	Wednesday
+	Thursday
+	Friday
+	Saturday
 )
 
 // Pascha functions
@@ -23,9 +39,9 @@ func ComputeJulianPascha(year int) (int, int) {
 }
 
 // Compute the Julian day number of Pascha for the given year.
-func ComputeJulianDayPascha(year int) int {
+func ComputePaschaJDN(year int) int {
 	month, day := ComputeJulianPascha(year)
-	return JulianDateToJulianDay(year, month, day)
+	return JulianDateToJDN(year, month, day)
 }
 
 // Compute the Gregorian date of Pascha for the given year.
@@ -43,24 +59,21 @@ func ComputeGregorianPascha(year int) (time.Time, error) {
 
 // Compute the distance of a given day from Pascha. Returns the distance and the year.
 // If the distance is < -77, the returned year will be earlier than the one passed in.
-func ComputePaschaDistance(date time.Time) (int, int) {
-	year := date.Year()
-
-	julianDay := GregorianDateToJulianDay(date)
-	distance := julianDay - ComputeJulianDayPascha(year)
+func ComputePaschaDistance(year, month, day int) (int, int) {
+	JDN := GregorianDateToJDN(year, month, day)
+	distance := JDN - ComputePaschaJDN(year)
 
 	if distance < -77 {
 		year--
-		distance = julianDay - ComputeJulianDayPascha(year)
+		distance = JDN - ComputePaschaJDN(year)
 	}
 
 	return distance, year
 }
 
 // Return the day of the week given the distance from Pascha.
-func DayOfWeekFromDistance(distance int) time.Weekday {
-	ordinal := (7 + distance%7) % 7
-	return time.Weekday(ordinal)
+func WeekDayFromPDist(distance int) int {
+	return (7 + distance%7) % 7
 }
 
 // Conversion functions
@@ -86,16 +99,14 @@ func JulianToGregorian(year, month, day int) (time.Time, error) {
 }
 
 // Convert a Julian date to a Julian day number.
-func JulianDateToJulianDay(year, month, day int) int {
+func JulianDateToJDN(year, month, day int) int {
 	// See https://en.wikipedia.org/wiki/Julian_day#Converting_Julian_calendar_date_to_Julian_Day_Number
 	return 367*year - (7*(year+5001+(month-9)/7))/4 + (275*month)/9 + day + 1729777
 }
 
 // Convert a Gregorian date to a Julian day number.
 // This function mimic's PHP's gregoriantojd().
-func GregorianDateToJulianDay(gregorianDate time.Time) int {
-	year, month, day := gregorianDate.Date()
-
+func GregorianDateToJDN(year, month, day int) int {
 	if month > 2 {
 		month -= 3
 	} else {
