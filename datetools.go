@@ -76,6 +76,11 @@ func WeekDayFromPDist(distance int) int {
 	return (7 + distance%7) % 7
 }
 
+func SurroundingWeekends(distance int) (int, int, int, int) {
+	saturdayBefore := distance - WeekDayFromPDist(distance) - 1
+	return saturdayBefore, saturdayBefore + 1, saturdayBefore + 7, saturdayBefore + 8
+}
+
 // Conversion functions
 
 // Convert a Julian date to a Gregorian date.
