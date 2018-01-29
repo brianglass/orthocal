@@ -20,7 +20,7 @@ type Year struct {
 	Forefathers          int
 	Theophany            int
 
-	Floats map[int]int
+	Floats []Float
 
 	// This is the number of days after the Elevation?
 	LucanJump int
@@ -29,11 +29,15 @@ type Year struct {
 	useJulian bool
 }
 
+type Float struct {
+	Index int
+	PDist int
+}
+
 func NewYear(year int, useJulian bool) *Year {
 	var self Year
 
-	self.Floats = make(map[int]int)
-
+	self.Floats = make([]Float, 0, 38)
 	self.useJulian = useJulian
 	self.Year = year
 	self.Pascha = ComputePaschaJDN(year)
@@ -41,6 +45,18 @@ func NewYear(year int, useJulian bool) *Year {
 	self.computeFloats()
 
 	return &self
+}
+
+func (self *Year) LookupFloatIndex(pdist int) int {
+	// Since the stuff at the top is higher priority than the stuff at the
+	// bottom, we do a linear search.
+	for _, float := range self.Floats {
+		if float.PDist == pdist {
+			return float.Index
+		}
+	}
+
+	return 0
 }
 
 func (self *Year) dateToPDist(month, day int) int {
@@ -101,84 +117,88 @@ func (self *Year) computePDists() {
 	self.LucanJump = 168 - (self.Elevation + 7 - WeekDayFromPDist(self.Elevation))
 }
 
-func (self *Year) computeFloats() {
-	for i := 1001; i < 1038; i++ {
-		self.Floats[i] = 499
-	}
+func (self *Year) addFloat(index, pdist int) {
+	float := Float{index, pdist}
+	self.Floats = append(self.Floats, float)
+}
 
-	self.Floats[1001] = self.FathersSix
-	self.Floats[1002] = self.FathersSeven
-	self.Floats[1003] = self.DemetriusSaturday
-	self.Floats[1004] = self.SynaxisUnmercenaries
+func (self *Year) computeFloats() {
+	// Order matters since we do a sequential search for the pdist values. The
+	// stuff at the top has higher priority than the stuff at the bottom.
+
+	self.addFloat(1001, self.FathersSix)
+	self.addFloat(1002, self.FathersSeven)
+	self.addFloat(1003, self.DemetriusSaturday)
+	self.addFloat(1004, self.SynaxisUnmercenaries)
 
 	// Floats around the Elevation of the Cross
 	satBefore, sunBefore, satAfter, sunAfter := SurroundingWeekends(self.Elevation)
 	if satBefore == self.NativityTheotokos {
-		self.Floats[1005] = self.Elevation - 1
+		self.addFloat(1005, self.Elevation-1)
 	} else {
-		self.Floats[1006] = satBefore
+		self.addFloat(1006, satBefore)
 	}
-	self.Floats[1007] = sunBefore
-	self.Floats[1008] = sunAfter
-	self.Floats[1009] = satAfter
-	self.Floats[1010] = sunAfter
+	self.addFloat(1007, sunBefore)
+	self.addFloat(1008, satAfter)
+	self.addFloat(1009, sunAfter)
+	self.addFloat(1010, self.Forefathers)
 
 	// Floats around Nativity
 	satBefore, sunBefore, satAfter, sunAfter = SurroundingWeekends(self.Nativity)
 	switch self.Nativity - 1 {
 	case satBefore:
-		self.Floats[1012] = sunBefore
-		self.Floats[1013] = self.Nativity - 2
-		self.Floats[1015] = self.Nativity - 1
+		self.addFloat(1013, self.Nativity-2)
+		self.addFloat(1012, sunBefore)
+		self.addFloat(1015, self.Nativity-1)
 	case sunBefore:
-		self.Floats[1011] = satBefore
-		self.Floats[1013] = self.Nativity - 3
-		self.Floats[1016] = self.Nativity - 1
+		self.addFloat(1013, self.Nativity-3)
+		self.addFloat(1011, sunBefore)
+		self.addFloat(1016, self.Nativity-1)
 	default:
-		self.Floats[1011] = satBefore
-		self.Floats[1012] = sunBefore
-		self.Floats[1014] = self.Nativity - 1
+		self.addFloat(1014, self.Nativity-1)
+		self.addFloat(1011, satBefore)
+		self.addFloat(1012, sunBefore)
 	}
 
 	satBeforeTheophany, sunBeforeTheophany, satAfterTheophany, sunAfterTheophany := SurroundingWeekends(self.Theophany)
 	switch WeekDayFromPDist(self.Nativity) {
 	case Sunday:
-		self.Floats[1017] = satAfter
-		self.Floats[1020] = self.Nativity + 1
-		self.Floats[1024] = sunBeforeTheophany
-		self.Floats[1026] = self.Theophany - 1
+		self.addFloat(1017, satAfter)
+		self.addFloat(1020, self.Nativity+1)
+		self.addFloat(1024, sunBeforeTheophany)
+		self.addFloat(1026, self.Theophany-1)
 	case Monday:
-		self.Floats[1017] = satAfter
-		self.Floats[1021] = sunAfter
-		self.Floats[1023] = self.Theophany - 5
-		self.Floats[1026] = self.Theophany - 1
+		self.addFloat(1017, satAfter)
+		self.addFloat(1021, sunAfter)
+		self.addFloat(1023, self.Theophany-5)
+		self.addFloat(1026, self.Theophany-1)
 	case Tuesday:
-		self.Floats[1019] = satAfter
-		self.Floats[1021] = sunAfter
-		self.Floats[1027] = satBeforeTheophany
-		self.Floats[1023] = self.Theophany - 5
-		self.Floats[1025] = self.Theophany - 2
+		self.addFloat(1019, satAfter)
+		self.addFloat(1021, sunAfter)
+		self.addFloat(1027, satBeforeTheophany)
+		self.addFloat(1023, self.Theophany-5)
+		self.addFloat(1025, self.Theophany-2)
 	case Wednesday:
-		self.Floats[1019] = satAfter
-		self.Floats[1021] = sunAfter
-		self.Floats[1022] = satBeforeTheophany
-		self.Floats[1028] = sunBeforeTheophany
-		self.Floats[1025] = self.Theophany - 3
+		self.addFloat(1019, satAfter)
+		self.addFloat(1021, sunAfter)
+		self.addFloat(1022, satBeforeTheophany)
+		self.addFloat(1028, sunBeforeTheophany)
+		self.addFloat(1025, self.Theophany-3)
 	case Thursday, Friday:
-		self.Floats[1019] = satAfter
-		self.Floats[1021] = sunAfter
-		self.Floats[1022] = satBeforeTheophany
-		self.Floats[1024] = sunBeforeTheophany
-		self.Floats[1026] = self.Theophany - 1
+		self.addFloat(1019, satAfter)
+		self.addFloat(1021, sunAfter)
+		self.addFloat(1022, satBeforeTheophany)
+		self.addFloat(1024, sunBeforeTheophany)
+		self.addFloat(1026, self.Theophany-1)
 	case Saturday:
-		self.Floats[1018] = self.Nativity + 6
-		self.Floats[1021] = sunAfter
-		self.Floats[1022] = satBeforeTheophany
-		self.Floats[1024] = sunBeforeTheophany
-		self.Floats[1026] = self.Theophany - 1
+		self.addFloat(1018, self.Nativity+6)
+		self.addFloat(1021, sunAfter)
+		self.addFloat(1022, satBeforeTheophany)
+		self.addFloat(1024, sunBeforeTheophany)
+		self.addFloat(1026, self.Theophany-1)
 	}
-	self.Floats[1029] = satAfterTheophany
-	self.Floats[1030] = sunAfterTheophany
+	self.addFloat(1029, satAfterTheophany)
+	self.addFloat(1030, sunAfterTheophany)
 
 	// Floats around Annunciation
 }
