@@ -20,7 +20,7 @@ type Year struct {
 	Forefathers          int
 	Theophany            int
 
-	Floats []Float
+	floats []float
 
 	// This is the number of days after the Elevation?
 	LucanJump int
@@ -29,7 +29,7 @@ type Year struct {
 	useJulian bool
 }
 
-type Float struct {
+type float struct {
 	Index int
 	PDist int
 }
@@ -37,7 +37,7 @@ type Float struct {
 func NewYear(year int, useJulian bool) *Year {
 	var self Year
 
-	self.Floats = make([]Float, 0, 38)
+	self.floats = make([]float, 0, 38)
 	self.useJulian = useJulian
 	self.Year = year
 	self.Pascha = ComputePaschaJDN(year)
@@ -51,7 +51,7 @@ func NewYear(year int, useJulian bool) *Year {
 func (self *Year) LookupFloatIndex(pdist int) int {
 	// Since the stuff at the top is higher priority than the stuff at the
 	// bottom, we do a linear search.
-	for _, float := range self.Floats {
+	for _, float := range self.floats {
 		if float.PDist == pdist {
 			return float.Index
 		}
@@ -119,8 +119,7 @@ func (self *Year) computePDists() {
 }
 
 func (self *Year) addFloat(index, pdist int) {
-	float := Float{index, pdist}
-	self.Floats = append(self.Floats, float)
+	self.floats = append(self.floats, float{index, pdist})
 }
 
 func (self *Year) computeFloats() {

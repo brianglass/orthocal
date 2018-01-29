@@ -17,7 +17,6 @@ create table if not exists days (
 create index days_pdist on days(pdist);
 create index days_day on days(month, day);
 
-
 insert into days values(-77, 0, 0, 'Sunday of Zacchaeus', '', '', 0, 0, '', '', 0, 0, 0);
 insert into days values(-76, 0, 0, '', '', '', 0, 0, '', '', 0, 0, 0);
 insert into days values(-75, 0, 0, '', '', '', 0, 0, '', '', 0, 0, 0);

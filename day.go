@@ -59,3 +59,12 @@ func (self *Day) GetRecords() {
 		log.Printf("title = \"%s\", feast = \"%s\", saint = \"%s\"\n", title, feastName, saint)
 	}
 }
+
+func (self *Day) GetReadings() []string {
+	sql := `
+		select readings.*, zachalos.zaDisplay as display, zachalos.zaSdisplay as sdisplay
+		from readings left join zachalos
+		on (zachalos.zaBook=readings.reBook and zachalos.zaNum=readings.reNum)
+		where $conds
+		order by reIndex`
+}
