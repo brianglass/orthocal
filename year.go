@@ -43,6 +43,7 @@ func NewYear(year int, useJulian bool) *Year {
 	self.Pascha = ComputePaschaJDN(year)
 	self.computePDists()
 	self.computeFloats()
+	self.computeNoDaily()
 
 	return &self
 }
@@ -200,5 +201,29 @@ func (self *Year) computeFloats() {
 	self.addFloat(1029, satAfterTheophany)
 	self.addFloat(1030, sunAfterTheophany)
 
+	// New Martyrs of Russia (OCA) is the Sunday on or before 1/31
+	martyrs := self.dateToPDist(1, 31)
+	weekday := WeekDayFromPDist(martyrs)
+	if weekday != Sunday {
+		// The Sunday before 1/31
+		martyrs = martyrs - 7 + ((7 - weekday) % 7)
+	}
+	self.addFloat(1031, martyrs)
+
 	// Floats around Annunciation
+	switch WeekDayFromPDist(self.Annunciation) {
+	case Saturday:
+		self.addFloat(1032, self.Annunciation-1)
+		self.addFloat(1033, self.Annunciation)
+	case Sunday:
+		self.addFloat(1034, self.Annunciation)
+	case Monday:
+		self.addFloat(1035, self.Annunciation)
+	default:
+		self.addFloat(1036, self.Annunciation-1)
+		self.addFloat(1037, self.Annunciation)
+	}
+}
+
+func (self *Year) computeNoDaily() {
 }
