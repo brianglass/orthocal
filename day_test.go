@@ -2,6 +2,7 @@ package orthocal_test
 
 import (
 	"database/sql"
+	"encoding/json"
 	_ "github.com/mattn/go-sqlite3"
 	"orthocal"
 	"testing"
@@ -17,9 +18,15 @@ func TestDB(t *testing.T) {
 	day := orthocal.NewDay(2018, 1, 28, false, db)
 	day.GetRecords()
 
+	actual, _ := json.Marshal(day)
+	t.Errorf("%s", actual)
+
 	// Annunciation
 	day = orthocal.NewDay(2018, 3, 25, false, db)
 	day.GetRecords()
+
+	actual, _ = json.Marshal(day)
+	t.Errorf("%s", actual)
 
 	t.Fail()
 }

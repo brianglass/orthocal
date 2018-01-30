@@ -22,6 +22,42 @@ const (
 	Saturday
 )
 
+var FastLevels = map[int]string{
+	0: "neutral",
+	1: "fast",
+	2: "lent",
+	3: "apostles",
+	4: "dormition",
+	5: "nativity",
+}
+
+var FastExceptions = map[int]string{
+	1:  "Wine & Oil Allowed",
+	2:  "Fish, Wine & Oil Allowed",
+	3:  "Wine & Oil Allowed (cannot be overriden by 2)",
+	4:  "Fish, Wine & Oil Allowed (overrides 3)",
+	5:  "Wine Allowed",
+	6:  "Wine, Oil & Caviar Allowed",
+	7:  "Meat Fast",
+	8:  "Strict Fast (Wine & Oil)",
+	9:  "Strict Fast",
+	10: "No overrides",
+	11: "Fast Free",
+}
+
+var FeastLevels = map[int]string{
+	-1: "No Liturgy",
+	0:  "Liturgy",
+	1:  "Presanctified",
+	2:  "Black squigg (6-stich typikon symbol)",
+	3:  "Red squigg (doxology typikon symbol)",
+	4:  "Red cross (polyeleos typikon symbol)",
+	5:  "Red cross half-circle (vigil typikon symbol)",
+	6:  "Red cross circle (great feast typikon symbol)",
+	7:  "Major feast Theotokos",
+	8:  "Major feast Lord",
+}
+
 // Pascha functions
 
 // Compute the Julian date of Pascha for the given year.

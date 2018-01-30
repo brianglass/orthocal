@@ -10,7 +10,7 @@ create table if not exists days (
   saint_note varchar(64) default null,
   saint varchar(128) default null,
   fast smallint not null default 0,
-  fast_exclusion smallint not null default 0,
+  fast_exception smallint not null default 0,
   flag tinyint not null default 0
 );
 
