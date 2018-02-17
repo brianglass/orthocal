@@ -20,7 +20,8 @@ type Year struct {
 	Forefathers          int
 	Theophany            int
 
-	floats []float
+	floats  []float
+	noDaily map[int]bool
 
 	// This is the number of days after the Elevation?
 	LucanJump int
@@ -38,12 +39,14 @@ func NewYear(year int, useJulian bool) *Year {
 	var self Year
 
 	self.floats = make([]float, 0, 38)
+	self.noDaily = make(map[int]bool)
+
 	self.useJulian = useJulian
 	self.Year = year
 	self.Pascha = ComputePaschaJDN(year)
 	self.computePDists()
 	self.computeFloats()
-	self.computeNoDaily()
+	self.computeNoDailyReadings()
 
 	return &self
 }
@@ -58,6 +61,11 @@ func (self *Year) LookupFloatIndex(pdist int) int {
 	}
 
 	return 0
+}
+
+func (self *Year) HasNoDailyReadings(pdist int) bool {
+	_, exists := self.noDaily[pdist]
+	return exists
 }
 
 func (self *Year) dateToPDist(month, day int) int {
@@ -224,5 +232,30 @@ func (self *Year) computeFloats() {
 	}
 }
 
-func (self *Year) computeNoDaily() {
+// assemble list of days on which daily readings are suppressed
+func (self *Year) computeNoDailyReadings() {
+	_, sunBefore, satAfter, sunAfter := SurroundingWeekends(self.Theophany)
+	self.noDaily[sunBefore] = true
+	self.noDaily[sunAfter] = true
+
+	self.noDaily[self.Theophany-5] = true
+	self.noDaily[self.Theophany-1] = true
+	self.noDaily[self.Theophany] = true
+
+	if satAfter == self.Theophany+1 {
+		self.noDaily[self.Theophany+1] = true
+	}
+
+	self.noDaily[self.Forefathers] = true
+
+	_, sunBefore, _, sunAfter = SurroundingWeekends(self.Nativity)
+	self.noDaily[sunBefore] = true
+	self.noDaily[self.Nativity-1] = true
+	self.noDaily[self.Nativity] = true
+	self.noDaily[self.Nativity+1] = true
+	self.noDaily[sunAfter] = true
+
+	if WeekDayFromPDist(self.Annunciation) == Saturday {
+		self.noDaily[self.Annunciation] = true
+	}
 }
