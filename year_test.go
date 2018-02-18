@@ -2,6 +2,7 @@ package orthocal_test
 
 import (
 	"orthocal"
+	"reflect"
 	"testing"
 )
 
@@ -13,7 +14,7 @@ func TestComputePDists(t *testing.T) {
 		t.Errorf("Got incorrect date for Pascha: %s. Should be %s", year.Pascha, pascha)
 	}
 
-	theophany := orthocal.GregorianDateToJDN(2018, 1, 6) - pascha
+	theophany := orthocal.GregorianDateToJDN(2019, 1, 6) - pascha
 	if theophany != year.Theophany {
 		t.Errorf("Got incorrect date for Theophany: %d. Should be %d", year.Theophany, theophany)
 	}
@@ -80,5 +81,32 @@ func TestComputePDistsSixth(t *testing.T) {
 	fatherssix := orthocal.GregorianDateToJDN(2016, 7, 17) - pascha
 	if fatherssix != year.FathersSix {
 		t.Errorf("Got incorrect date for the Fathers of the first 6 councils: %d. Should be %d", year.FathersSix, fatherssix)
+	}
+}
+
+func TestComputeReserves(t *testing.T) {
+	// 2018
+	// Reserves should be: 266, 161, 168
+	// ExtraSundays should be 3
+	year := orthocal.NewYear(2018, false)
+
+	expected := []int{266, 161, 168}
+	if !reflect.DeepEqual(year.Reserves, expected) {
+		t.Errorf("Got incorrect list of reserves for Sunday of the Publican and Pharisee: %s. Should be %s", year.Reserves, expected)
+	}
+
+	if year.ExtraSundays != 3 {
+		t.Errorf("Got incorrect number of extra sundays: %d. Should be %d", year.ExtraSundays, 3)
+	}
+}
+
+func TestNoDaily(t *testing.T) {
+	year := orthocal.NewYear(2018, false)
+
+	expected := []int{266, 280, 268, 272, 273, 252, 259, 260, 261, 262, 266}
+	for _, day := range expected {
+		if !year.HasNoDailyReadings(day) {
+			t.Errorf("Day %d Should have no daily readings, but it does.", day)
+		}
 	}
 }

@@ -2,10 +2,10 @@ create table if not exists readings (
   month smallint not null default 0,
   day smallint not null default 0,
   pdist smallint not null default 999,
-  type varchar(64) default null,
+  source varchar(64) default null,
   desc varchar(64) default null,
   book varchar(8) default null,
-  num varchar(8) default null,
+  pericope varchar(8) default null,
   ordering smallint not null default 0,
   flag tinyint not null default 0
 );

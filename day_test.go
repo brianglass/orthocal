@@ -15,14 +15,24 @@ func TestDB(t *testing.T) {
 	}
 
 	// Sunday of the Publican and Pharisee
+	// Reserves should be: 266, 161, 168
+	// ExtraSundays should be 3
 	day := orthocal.NewDay(2018, 1, 28, false, true, db)
-	actual, _ := json.Marshal(day)
+	actual, _ := json.MarshalIndent(day, "", "\t")
+	t.Errorf("%s", actual)
+
+	// Cheesefare Sunday
+	day = orthocal.NewDay(2018, 2, 18, false, true, db)
+	actual, _ = json.MarshalIndent(day, "", "\t")
 	t.Errorf("%s", actual)
 
 	// Annunciation
-	day = orthocal.NewDay(2018, 3, 25, false, true, db)
-	actual, _ = json.Marshal(day)
-	t.Errorf("%s", actual)
+	/*
+		day = orthocal.NewDay(2018, 3, 25, false, true, db)
+		actual, _ = json.Marshal(day)
+		t.Errorf("%s", actual)
+		day.PrintReadings()
+	*/
 
 	t.Fail()
 }

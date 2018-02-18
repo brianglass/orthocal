@@ -3,7 +3,8 @@ package orthocal
 type Year struct {
 	Year int
 
-	Pascha int // Julian Day Number (JDN)
+	Pascha     int // Julian Day Number (JDN)
+	NextPascha int
 
 	// These measure the distance from Pascha (PDist)
 	Finding              int
@@ -20,13 +21,16 @@ type Year struct {
 	Forefathers          int
 	Theophany            int
 
-	floats  []float
-	noDaily map[int]bool
+	ExtraSundays int
 
 	// This is the number of days after the Elevation?
 	LucanJump int
 
+	Reserves []int
+
 	// unexported
+	floats    []float
+	noDaily   map[int]bool
 	useJulian bool
 }
 
@@ -44,9 +48,11 @@ func NewYear(year int, useJulian bool) *Year {
 	self.useJulian = useJulian
 	self.Year = year
 	self.Pascha = ComputePaschaJDN(year)
+	self.NextPascha = ComputePaschaJDN(year + 1)
 	self.computePDists()
 	self.computeFloats()
 	self.computeNoDailyReadings()
+	self.computeReserves()
 
 	return &self
 }
@@ -60,7 +66,7 @@ func (self *Year) LookupFloatIndex(pdist int) int {
 		}
 	}
 
-	return 0
+	return 499
 }
 
 func (self *Year) HasNoDailyReadings(pdist int) bool {
@@ -68,12 +74,12 @@ func (self *Year) HasNoDailyReadings(pdist int) bool {
 	return exists
 }
 
-func (self *Year) dateToPDist(month, day int) int {
+func (self *Year) dateToPDist(month, day, year int) int {
 	if self.useJulian {
 		// TODO: Need to test this and confirm it's valid
-		return JulianDateToJDN(self.Year, month, day) - self.Pascha
+		return JulianDateToJDN(year, month, day) - self.Pascha
 	} else {
-		return GregorianDateToJDN(self.Year, month, day) - self.Pascha
+		return GregorianDateToJDN(year, month, day) - self.Pascha
 	}
 }
 
@@ -81,13 +87,13 @@ func (self *Year) dateToPDist(month, day int) int {
 func (self *Year) computePDists() {
 	var pdist, weekday int // for intermediate results
 
-	self.Theophany = self.dateToPDist(1, 6)
-	self.Finding = self.dateToPDist(2, 24)
-	self.Annunciation = self.dateToPDist(3, 25)
-	self.PeterAndPaul = self.dateToPDist(6, 29)
+	self.Theophany = self.dateToPDist(1, 6, self.Year+1)
+	self.Finding = self.dateToPDist(2, 24, self.Year)
+	self.Annunciation = self.dateToPDist(3, 25, self.Year)
+	self.PeterAndPaul = self.dateToPDist(6, 29, self.Year)
 
 	// The Fathers of the Sixth Ecumenical Council falls on the Sunday nearest 7/16
-	pdist = self.dateToPDist(7, 16)
+	pdist = self.dateToPDist(7, 16, self.Year)
 	weekday = WeekDayFromPDist(pdist)
 	if weekday < Thursday {
 		self.FathersSix = pdist - weekday
@@ -95,13 +101,13 @@ func (self *Year) computePDists() {
 		self.FathersSix = pdist + 7 - weekday
 	}
 
-	self.Beheading = self.dateToPDist(8, 29)
-	self.NativityTheotokos = self.dateToPDist(9, 8)
-	self.Elevation = self.dateToPDist(9, 14)
+	self.Beheading = self.dateToPDist(8, 29, self.Year)
+	self.NativityTheotokos = self.dateToPDist(9, 8, self.Year)
+	self.Elevation = self.dateToPDist(9, 14, self.Year)
 
 	// The Fathers of the Seventh Ecumenical Council falls on the Sunday
 	// following 10/11 or 10/11 itself if it is a Sunday.
-	pdist = self.dateToPDist(10, 11)
+	pdist = self.dateToPDist(10, 11, self.Year)
 	weekday = WeekDayFromPDist(pdist)
 	if weekday > Sunday {
 		pdist += 7 - weekday
@@ -109,14 +115,14 @@ func (self *Year) computePDists() {
 	self.FathersSeven = pdist
 
 	// Demetrius Saturday is the Saturday before 10/26
-	pdist = self.dateToPDist(10, 26)
+	pdist = self.dateToPDist(10, 26, self.Year)
 	self.DemetriusSaturday = pdist - WeekDayFromPDist(pdist) - 1
 
 	// The Synaxis of the Unmercenaries is the Sunday following 11/1
-	pdist = self.dateToPDist(11, 1)
+	pdist = self.dateToPDist(11, 1, self.Year)
 	self.SynaxisUnmercenaries = pdist + 7 - WeekDayFromPDist(pdist)
 
-	self.Nativity = self.dateToPDist(12, 25)
+	self.Nativity = self.dateToPDist(12, 25, self.Year)
 
 	// Forefathers Sunday is the week before the week of Nativity
 	weekday = WeekDayFromPDist(self.Nativity)
@@ -209,7 +215,7 @@ func (self *Year) computeFloats() {
 	self.addFloat(1030, sunAfterTheophany)
 
 	// New Martyrs of Russia (OCA) is the Sunday on or before 1/31
-	martyrs := self.dateToPDist(1, 31)
+	martyrs := self.dateToPDist(1, 31, self.Year)
 	weekday := WeekDayFromPDist(martyrs)
 	if weekday != Sunday {
 		// The Sunday before 1/31
@@ -257,5 +263,23 @@ func (self *Year) computeNoDailyReadings() {
 
 	if WeekDayFromPDist(self.Annunciation) == Saturday {
 		self.noDaily[self.Annunciation] = true
+	}
+}
+
+func (self *Year) computeReserves() {
+	// TODO: store surrounding weekends in the struct
+	_, _, _, sunAfter := SurroundingWeekends(self.Theophany)
+	self.ExtraSundays = (self.NextPascha - self.Pascha - 84 - sunAfter) / 7
+
+	if self.ExtraSundays > 0 {
+		for i := self.Forefathers + self.LucanJump + 7; i <= 266; i += 7 {
+			self.Reserves = append(self.Reserves, i)
+		}
+		remainder := self.ExtraSundays - len(self.Reserves)
+		if remainder > 0 {
+			for i := 175 - remainder*7; i < 169; i += 7 {
+				self.Reserves = append(self.Reserves, i)
+			}
+		}
 	}
 }
