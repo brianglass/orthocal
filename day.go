@@ -3,6 +3,7 @@ package orthocal
 import (
 	"database/sql"
 	"log"
+	"time"
 )
 
 type Day struct {
@@ -43,7 +44,12 @@ func NewDay(year, month, day int, useJulian bool, doJump bool, db *sql.DB) *Day 
 	var self Day
 
 	self.db = db
-	self.Year, self.Month, self.Day = year, month, day
+
+	// time.Date automatically wraps dates that are invalid to the next month.
+	// e.g. April 31 -> May 1
+	date := time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.Local)
+	self.Year, self.Month, self.Day = date.Year(), int(date.Month()), date.Day()
+
 	pdist, pyear := ComputePaschaDistance(year, month, day)
 	if useJulian {
 		self.JDN = JulianDateToJDN(year, month, day)
@@ -80,6 +86,7 @@ func (self *Day) getCommemorations() {
 			where pdist = $1
 			or (month = $3 and day = $4)`, self.PDist, self.Month, self.Day)
 	}
+	defer rows.Close()
 
 	if e != nil {
 		log.Printf("Got error querying the database: %#n.", e)
@@ -214,6 +221,9 @@ func (self *Day) getReadings() {
 			$q = "select readings.*, zachalos.zaDisplay as display, zachalos.zaSdisplay as sdisplay from readings left join zachalos on (zachalos.zaBook=readings.reBook and zachalos.zaNum=readings.reNum) where $conds order by reIndex";
 	*/
 
+	// Timings using Prepare instead of Query proved that the time saved on a
+	// month of days was around a couple milliseconds and not worth the added
+	// complexity.
 	rows, e := self.db.Query(`
 		select source, r.desc, r.book, display, sdisplay
 		from readings r left join pericopes p
@@ -224,6 +234,7 @@ func (self *Day) getReadings() {
 			or (pdist = $3 and source != 'Epistle' and source != 'Gospel')
 			or (pdist = $4)
 		order by ordering`, gPDist, ePDist, self.PDist, self.pyear.LookupFloatIndex(self.PDist))
+	defer rows.Close()
 
 	if e != nil {
 		log.Printf("Got error querying the database: %#n.", e)
