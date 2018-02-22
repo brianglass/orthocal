@@ -29,7 +29,27 @@ func NewBible(db *sql.DB) *Bible {
 	return &self
 }
 
+/*
+	Parse a scripture reference and return the scripture passage.  A reference
+	includes a book name and a verse specification.  A specification can
+	include multiple verse ranges separated by commas, where a range is a
+	collection of 1 or more contiguous verses. Chapter specification can be
+	implicit. A reference can look like any of the following:
+
+	Matt 1.1-25
+	Matt 4.25-5.13
+	Matt 10.32-36, 11.1
+	Matt 6.31-34, 7.9-11
+	Matt 10.1, 5-8
+
+	NOTE: this function directly interpolates values from the reference into
+	SQL. This is safe as long as the provided reference is coming from the
+	database. In other words, this method might be unsafe when used to lookup
+	user-provided references.
+*/
 func (self *Bible) Lookup(reference string) Passage {
+	var passage Passage
+
 	sql := self.convertReferenceToSQL(reference)
 	rows, e := self.db.Query(sql)
 	defer rows.Close()
@@ -39,7 +59,6 @@ func (self *Bible) Lookup(reference string) Passage {
 		return nil
 	}
 
-	var passage Passage
 	for rows.Next() {
 		var verse Verse
 		rows.Scan(&verse.Book, &verse.Chapter, &verse.Verse, &verse.Content)
@@ -50,19 +69,6 @@ func (self *Bible) Lookup(reference string) Passage {
 }
 
 func (self *Bible) convertReferenceToSQL(reference string) string {
-	/*
-		We parse a scripture reference and convert it to SQL.  A reference
-		includes a book name and a verse specification.  A specification can
-		include multiple verse ranges separated by commas, where a range is a
-		collection of 1 or more contiguous verses. Chapter specification can be
-		implicit. A reference can look like any of the following:
-
-		Matt 1.1-25
-		Matt 4.25-5.13
-		Matt 10.32-36, 11.1
-		Matt 6.31-34, 7.9-11
-		Matt 10.1, 5-8
-	*/
 	var conditionals []string
 	var chapter string
 
@@ -100,6 +106,7 @@ func (self *Bible) convertReferenceToSQL(reference string) string {
 
 		conditionals = append(conditionals, conditional)
 
+		// Remember the most recently used chapter
 		chapter = m[3]
 		if len(chapter) == 0 {
 			chapter = m[1]
