@@ -247,7 +247,10 @@ func (self *Day) getReadings() {
 		var reading Reading
 		rows.Scan(&reading.Source, &reading.Description, &reading.Book, &reading.Display, &reading.ShortDisplay)
 		if self.bible != nil {
-			reading.Passage = self.bible.Lookup(reading.ShortDisplay)
+			passage := self.bible.Lookup(reading.ShortDisplay)
+			if passage != nil {
+				reading.Passage = passage
+			}
 		}
 		self.Readings = append(self.Readings, reading)
 	}
