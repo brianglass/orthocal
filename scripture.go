@@ -53,7 +53,7 @@ func (self *Bible) Lookup(reference string) Passage {
 	sql := self.convertReferenceToSQL(reference)
 	rows, e := self.db.Query(sql)
 	if e != nil {
-		log.Printf("Got error querying the database: %#n.", e)
+		log.Printf("Got error querying the database for scripture '%s': %#n.", reference, e)
 		return passage
 	}
 	defer rows.Close()
