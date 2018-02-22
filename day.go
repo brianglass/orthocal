@@ -228,7 +228,7 @@ func (self *Day) getReadings() {
 	// month of days was around a couple milliseconds and not worth the added
 	// complexity.
 	rows, e := self.db.Query(`
-		select source, r.desc, r.book, display, sdisplay
+		select source, r.desc, p.book, display, sdisplay
 		from readings r left join pericopes p
 		on (r.book=p.book and r.pericope=p.pericope)
 		where
