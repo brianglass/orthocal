@@ -9,7 +9,6 @@ import (
 )
 
 type Verse struct {
-	Book    string
 	Chapter uint16
 	Verse   uint16
 	Content string
@@ -63,7 +62,7 @@ func (self *Bible) Lookup(reference string) Passage {
 
 	for rows.Next() {
 		var verse Verse
-		rows.Scan(&verse.Book, &verse.Chapter, &verse.Verse, &verse.Content)
+		rows.Scan(&verse.Chapter, &verse.Verse, &verse.Content)
 		passage = append(passage, verse)
 	}
 
@@ -73,7 +72,7 @@ func (self *Bible) Lookup(reference string) Passage {
 func (self *Bible) convertReferenceToSQL(reference string) string {
 	var conditionals []string
 
-	sql := "select book, chapter, verse, content\nfrom bible\n"
+	sql := "select chapter, verse, content\nfrom bible\n"
 
 	// Get the book and specification
 	groups := regexp.MustCompile(`([\w\s]+)\s+(\d.*)`).FindStringSubmatch(reference)
