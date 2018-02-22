@@ -56,7 +56,7 @@ func (self *Bible) Lookup(reference string) Passage {
 
 	if e != nil {
 		log.Printf("Got error querying the database: %#n.", e)
-		return nil
+		return passage
 	}
 
 	for rows.Next() {
