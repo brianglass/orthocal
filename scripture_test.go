@@ -2,7 +2,6 @@ package orthocal_test
 
 import (
 	"database/sql"
-	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 	"orthocal"
 	"testing"
@@ -27,9 +26,9 @@ func TestScriptureLookup(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		message := fmt.Sprintf("Scripture Lookup")
-		t.Run(message, func(t *testing.T) {
+		t.Run("Scripture Lookup", func(t *testing.T) {
 			passage := bible.Lookup(tc.reference)
+			// Not really a rigorous test, but it ought to catch a regression ;)
 			if len(passage) != tc.count {
 				t.Logf("%s should return %d verses but returned %d verses.", tc.reference, tc.count, len(passage))
 			}

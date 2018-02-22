@@ -22,6 +22,7 @@ type Day struct {
 
 	db    *sql.DB
 	pyear *Year
+	bible *Bible
 }
 
 type Commemoration struct {
@@ -38,12 +39,14 @@ type Reading struct {
 	Description  string
 	Display      string
 	ShortDisplay string
+	Passage      Passage
 }
 
-func NewDay(year, month, day int, useJulian bool, doJump bool, db *sql.DB) *Day {
+func NewDay(year, month, day int, useJulian bool, doJump bool, db *sql.DB, bible *Bible) *Day {
 	var self Day
 
 	self.db = db
+	self.bible = bible
 
 	// time.Date automatically wraps dates that are invalid to the next month.
 	// e.g. April 31 -> May 1
@@ -243,6 +246,9 @@ func (self *Day) getReadings() {
 	for rows.Next() {
 		var reading Reading
 		rows.Scan(&reading.Source, &reading.Description, &reading.Book, &reading.Display, &reading.ShortDisplay)
+		if self.bible != nil {
+			reading.Passage = self.bible.Lookup(reading.ShortDisplay)
+		}
 		self.Readings = append(self.Readings, reading)
 	}
 }
