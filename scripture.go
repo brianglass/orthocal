@@ -41,6 +41,8 @@ func NewBible(db *sql.DB) *Bible {
 	Matt 10.32-36, 11.1
 	Matt 6.31-34, 7.9-11
 	Matt 10.1, 5-8
+	Mark 15.22, 25, 33-41
+	Jude 1-10
 
 	NOTE: this function directly interpolates values from the reference into
 	SQL. This is safe as long as the provided reference is coming from the
@@ -69,7 +71,6 @@ func (self *Bible) Lookup(reference string) Passage {
 
 func (self *Bible) convertReferenceToSQL(reference string) string {
 	var conditionals []string
-	var chapter string
 
 	sql := "select book, chapter, verse, content\nfrom bible\n"
 
@@ -80,6 +81,7 @@ func (self *Bible) convertReferenceToSQL(reference string) string {
 	sql += fmt.Sprintf("where book = \"%s\"\n", book)
 
 	// Create a conditional for each verse range in the specification
+	chapter := "1"
 	for _, verseRange := range regexp.MustCompile(`,\s*`).Split(specification, 4) {
 		var conditional string
 
@@ -107,9 +109,11 @@ func (self *Bible) convertReferenceToSQL(reference string) string {
 		conditionals = append(conditionals, conditional)
 
 		// Remember the most recently used chapter
-		chapter = m[3]
-		if len(chapter) == 0 {
-			chapter = m[1]
+		if len(m[3]) > 0 || len(m[1]) > 0 {
+			chapter = m[3]
+			if len(chapter) == 0 {
+				chapter = m[1]
+			}
 		}
 	}
 
