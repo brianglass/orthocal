@@ -80,8 +80,10 @@ func (self *Bible) convertReferenceToSQL(reference string) string {
 
 	sql += fmt.Sprintf("where book = \"%s\"\n", book)
 
-	// Handle each verse range in the specification
+	// Create a conditional for each verse range in the specification
 	for _, verseRange := range regexp.MustCompile(`,\s*`).Split(specification, 4) {
+		var conditional string
+
 		m := refRe.FindStringSubmatch(verseRange)
 
 		defaultChapter := m[1]
@@ -90,7 +92,6 @@ func (self *Bible) convertReferenceToSQL(reference string) string {
 			defaultChapter = chapter
 		}
 
-		var conditional string
 		if len(m[4]) > 0 {
 			if len(m[3]) > 0 && m[3] != m[1] {
 				// Handle ranges that span chapters
