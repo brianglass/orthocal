@@ -52,12 +52,11 @@ func (self *Bible) Lookup(reference string) Passage {
 
 	sql := self.convertReferenceToSQL(reference)
 	rows, e := self.db.Query(sql)
-	defer rows.Close()
-
 	if e != nil {
 		log.Printf("Got error querying the database: %#n.", e)
 		return passage
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var verse Verse
