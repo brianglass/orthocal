@@ -42,6 +42,7 @@ func NewBible(db *sql.DB) *Bible {
 	Matt 6.31-34, 7.9-11
 	Matt 10.1, 5-8
 	Mark 15.22, 25, 33-41
+	1 John 2.7-17
 	Jude 1-10
 
 	NOTE: this function directly interpolates values from the reference into
@@ -74,9 +75,10 @@ func (self *Bible) convertReferenceToSQL(reference string) string {
 
 	sql := "select book, chapter, verse, content\nfrom bible\n"
 
-	// Break out book and range specifications
-	groups := regexp.MustCompile(`\s+`).Split(reference, 2)
-	book, specification := groups[0], groups[1]
+	// Get the book and specification
+	groups := regexp.MustCompile(`([\w\s]+)\s+(\d.*)`).FindStringSubmatch(reference)
+	book := strings.Replace(groups[1], " ", "", -1)
+	specification := groups[2]
 
 	sql += fmt.Sprintf("where book = \"%s\"\n", book)
 
