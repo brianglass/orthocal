@@ -20,7 +20,10 @@ type Bible struct {
 	db *sql.DB
 }
 
-var refRe = regexp.MustCompile(`(?:(\d+)\.)?(\d+)(?:-(?:(\d+)\.)?(\d+))?`)
+var (
+	refRe   = regexp.MustCompile(`([\w\s]+)\s+(\d.*)`)
+	rangeRe = regexp.MustCompile(`(?:(\d+)\.)?(\d+)(?:-(?:(\d+)\.)?(\d+))?`)
+)
 
 func NewBible(db *sql.DB) *Bible {
 	var self Bible
@@ -75,7 +78,7 @@ func (self *Bible) convertReferenceToSQL(reference string) string {
 	sql := "select chapter, verse, content\nfrom bible\n"
 
 	// Get the book and specification
-	groups := regexp.MustCompile(`([\w\s]+)\s+(\d.*)`).FindStringSubmatch(reference)
+	groups := refRe.FindStringSubmatch(reference)
 	book := strings.Replace(groups[1], " ", "", -1)
 	specification := groups[2]
 
@@ -86,7 +89,7 @@ func (self *Bible) convertReferenceToSQL(reference string) string {
 	for _, verseRange := range regexp.MustCompile(`,\s*`).Split(specification, 4) {
 		var conditional string
 
-		m := refRe.FindStringSubmatch(verseRange)
+		m := rangeRe.FindStringSubmatch(verseRange)
 
 		defaultChapter := m[1]
 		if len(defaultChapter) == 0 {
