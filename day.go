@@ -81,13 +81,15 @@ func (self *Day) getCommemorations() {
 			`select title, subtitle, feast_name, feast_level, saint_note, saint, fast, fast_exception
 			from days
 			where pdist = $1 or pdist = $2
-			or (month = $3 and day = $4)`, self.PDist, floatIndex, self.Month, self.Day)
+			or (month = $3 and day = $4)
+			order by feast_level desc`, self.PDist, floatIndex, self.Month, self.Day)
 	} else {
 		rows, e = self.db.Query(
 			`select title, subtitle, feast_name, feast_level, saint_note, saint, fast, fast_exception
 			from days
 			where pdist = $1
-			or (month = $3 and day = $4)`, self.PDist, self.Month, self.Day)
+			or (month = $3 and day = $4)
+			order by feast_level desc`, self.PDist, self.Month, self.Day)
 	}
 	defer rows.Close()
 
@@ -95,7 +97,7 @@ func (self *Day) getCommemorations() {
 		log.Printf("Got error querying the database: %#n.", e)
 	}
 
-	var overallFastLevel, overallFastException, overallFeastLevel int
+	overallFastLevel, overallFastException, overallFeastLevel := 0, 0, -2
 	for rows.Next() {
 		var title, subtitle, feastName, saintNote, saint string
 		var feastLevel, fast, fastException int

@@ -33,12 +33,9 @@ func TestDB(t *testing.T) {
 	t.Errorf("%s", actual)
 
 	// Annunciation
-	/*
-		day = orthocal.NewDay(2018, 3, 25, false, true, db)
-		actual, _ = json.Marshal(day)
-		t.Errorf("%s", actual)
-		day.PrintReadings()
-	*/
+	day = orthocal.NewDay(2018, 3, 25, false, true, db, nil)
+	actual, _ = json.MarshalIndent(day, "", "\t")
+	t.Errorf("%s", actual)
 
 	t.Fail()
 }
