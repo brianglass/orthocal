@@ -25,10 +25,10 @@ const (
 var FastLevels = map[int]string{
 	0: "No Fast",
 	1: "Fast",
-	2: "Lent",
-	3: "Apostles",
-	4: "Dormition",
-	5: "Nativity",
+	2: "Lenten Fast",
+	3: "Apostles Fast",
+	4: "Dormition Fast",
+	5: "Nativity Fast",
 }
 
 var FastExceptions = map[int]string{
