@@ -3,8 +3,9 @@ package orthocal
 type Year struct {
 	Year int
 
-	Pascha     int // Julian Day Number (JDN)
-	NextPascha int
+	Pascha         int // Julian Day Number (JDN)
+	PreviousPascha int
+	NextPascha     int
 
 	// These measure the distance from Pascha (PDist)
 	Finding              int
@@ -48,6 +49,7 @@ func NewYear(year int, useJulian bool) *Year {
 	self.useJulian = useJulian
 	self.Year = year
 	self.Pascha = ComputePaschaJDN(year)
+	self.PreviousPascha = ComputePaschaJDN(year - 1)
 	self.NextPascha = ComputePaschaJDN(year + 1)
 	self.computePDists()
 	self.computeFloats()

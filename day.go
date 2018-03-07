@@ -20,7 +20,8 @@ type Day struct {
 	Commemorations []Commemoration
 	Readings       []Reading
 
-	pyear *Year
+	feastLevel int
+	pyear      *Year
 }
 
 type Commemoration struct {
@@ -38,6 +39,12 @@ type Reading struct {
 	Display      string
 	ShortDisplay string
 	Passage      Passage
+}
+
+func (self *Day) HasNoMemorial() bool {
+	return ((self.PDist == -36 || self.PDist == -29 || self.PDist == -22) &&
+		(self.Month == 3) &&
+		(self.Day == 9 || self.Day == 24 || self.Day == 25 || self.Day == 26))
 }
 
 type DayFactory struct {
@@ -135,38 +142,32 @@ func (self *DayFactory) addCommemorations(day *Day) {
 		day.FastLevel = FastLevels[overallFastLevel]
 		day.FastException = FastExceptions[overallFastException]
 		day.FeastLevel = FeastLevels[overallFeastLevel]
+
+		day.feastLevel = overallFeastLevel
 	}
 }
 
-/*
-func (self *Day) matinsGospel int {
-	if self.Weekday != Sunday {
-		return 0
-	}
+func (self *DayFactory) matinsGospel(day *Day) (bool, int) {
+	if day.Weekday == Sunday {
+		if day.PDist > -8 && day.PDist < 50 {
+			return false, 0
+		} else if day.feastLevel < 7 {
+			pbase := day.PDist
+			if day.PDist < 0 {
+				pbase = day.JDN - day.pyear.PreviousPascha
+			}
 
-	if -8 < self.PDist < 50 {
-		return 0
-	}
+			x := (pbase - 49) % 77
+			if x == 0 {
+				x = 77
+			}
 
-	if self.FeastLevel < 7 {
-	}
-
-// calculate sunday matins gospel
-	$no_matins_gospel=false;
-	$matins_gospel=0;
-	if ($dow==0) {
-		if ($pday > -8 && $pday < 50) {
-			$no_matins_gospel=true;
-		} elseif ($feast_level < 7) {
-			$no_matins_gospel=true;
-			$mbase = $pbase - 49;
-			$x = $mbase % 77;
-			if ($x==0) {$x=77;}
-			$matins_gospel = floor($x/7);
+			return false, x / 7
 		}
 	}
+
+	return true, 0
 }
-*/
 
 func (self *DayFactory) addReadings(day *Day, bible *Bible) {
 	var gPDist, ePDist int
@@ -214,7 +215,11 @@ func (self *DayFactory) addReadings(day *Day, bible *Bible) {
 		}
 	}
 
-	// TODO: handle days with no memorials
+	// check if memorial saturday is cancelled
+	log.Printf("nomem: %t", day.HasNoMemorial())
+
+	noMatinsGospel, matinsGospel := self.matinsGospel(day)
+	log.Printf("Matins Gospel: %d, no matins gospel: %t", matinsGospel, noMatinsGospel)
 
 	/*
 			if ($day['no_memorial']) {$nomem=" and reDesc != 'Departed'";} else {$nomem="";}
@@ -225,9 +230,9 @@ func (self *DayFactory) addReadings(day *Day, bible *Bible) {
 			$conditions[]="(rePday = {$day['pday']} and reType != 'Epistle' and reType !='Gospel')";
 			if ($day['fday'] && $day['fday'] != 499)
 			  { $conditions[]="(rePday = {$day['fday']})"; }
-
 			if ($day['matins_gospel'])
 			  { $mg = $day['matins_gospel']+700; $conditions[]="(rePday = $mg)"; }
+
 			if ($day['no_matins_gospel']) {$x="and reType != 'Matins Gospel'";} else {$x="";}
 			if ($day['no_paremias']) {$y="and reType != 'Vespers'";} else {$y="";}
 		// no readings for leavetaking annunciation on non-liturgy day
@@ -245,21 +250,38 @@ func (self *DayFactory) addReadings(day *Day, bible *Bible) {
 	// Timings using Prepare instead of Query proved that the time saved on a
 	// month of days was around a couple milliseconds and not worth the added
 	// complexity.
-	rows, e := self.db.Query(`
-		select source, r.desc, p.book, display, sdisplay
-		from readings r left join pericopes p
-		on (r.book=p.book and r.pericope=p.pericope)
-		where
-			(pdist = $1 and source = 'Gospel')
-			or (pdist = $2 and source = 'Epistle')
-			or (pdist = $3 and source != 'Epistle' and source != 'Gospel')
-			or (pdist = $4)
-		order by ordering`, gPDist, ePDist, day.PDist, day.pyear.LookupFloatIndex(day.PDist))
-	defer rows.Close()
+	var rows *sql.Rows
+	var e error
+	if day.HasNoMemorial() {
+		rows, e = self.db.Query(`
+			select source, r.desc, p.book, display, sdisplay
+			from readings r left join pericopes p
+			on (r.book=p.book and r.pericope=p.pericope)
+			where
+				   (pdist = $1 and source = 'Gospel' and r.desc != 'Departed')
+				or (pdist = $2 and source = 'Epistle' and r.desc != 'Departed')
+				or (pdist = $3 and source != 'Epistle' and source != 'Gospel')
+				or (pdist = $4)
+				or (pdist = $5 and pdist > 700)
+			order by ordering`, gPDist, ePDist, day.PDist, day.pyear.LookupFloatIndex(day.PDist), matinsGospel+700)
+	} else {
+		rows, e = self.db.Query(`
+			select source, r.desc, p.book, display, sdisplay
+			from readings r left join pericopes p
+			on (r.book=p.book and r.pericope=p.pericope)
+			where
+				   (pdist = $1 and source = 'Gospel')
+				or (pdist = $2 and source = 'Epistle')
+				or (pdist = $3 and source != 'Epistle' and source != 'Gospel')
+				or (pdist = $4)
+				or (pdist = $5 and pdist > 700)
+			order by ordering`, gPDist, ePDist, day.PDist, day.pyear.LookupFloatIndex(day.PDist), matinsGospel+700)
+	}
 
 	if e != nil {
 		log.Printf("Got error querying the database: %#n.", e)
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var reading Reading

@@ -39,5 +39,29 @@ func TestDB(t *testing.T) {
 	actual, _ = json.MarshalIndent(day, "", "\t")
 	t.Errorf("%s", actual)
 
+	// Veneration of the Cross - should include 7th Matins Gospel
+	day = factory.NewDay(2018, 3, 11, nil)
+	actual, _ = json.MarshalIndent(day, "", "\t")
+	t.Errorf("%s", actual)
+
+	// Memorial Saturday with no memorial readings
+	// Should not have John 5.24-30
+	day = factory.NewDay(2022, 3, 26, nil)
+	actual, _ = json.MarshalIndent(day, "", "\t")
+	t.Errorf("%s", actual)
+
+	/*
+		today := time.Now()
+		for {
+			today = today.AddDate(0, 0, 1)
+			day = factory.NewDay(today.Year(), int(today.Month()), today.Day(), nil)
+			if day.HasNoMemorial() {
+				actual, _ = json.MarshalIndent(day, "", "\t")
+				t.Errorf("%s", actual)
+				break
+			}
+		}
+	*/
+
 	t.Fail()
 }
