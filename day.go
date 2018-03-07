@@ -3,6 +3,7 @@ package orthocal
 import (
 	"database/sql"
 	"log"
+	"sync"
 	"time"
 )
 
@@ -18,11 +19,8 @@ type Day struct {
 	FastException  string
 	Commemorations []Commemoration
 	Readings       []Reading
-	DoJump         bool
 
-	db    *sql.DB
 	pyear *Year
-	bible *Bible
 }
 
 type Commemoration struct {
@@ -42,39 +40,57 @@ type Reading struct {
 	Passage      Passage
 }
 
-func NewDay(year, month, day int, useJulian bool, doJump bool, db *sql.DB, bible *Bible) *Day {
-	var self Day
+type DayFactory struct {
+	db        *sql.DB
+	useJulian bool
+	doJump    bool
+	years     sync.Map
+}
 
+func NewDayFactory(useJulian bool, doJump bool, db *sql.DB) *DayFactory {
+	var self DayFactory
 	self.db = db
-	self.bible = bible
+	self.useJulian = useJulian
+	self.doJump = doJump
+	return &self
+}
+
+func (self *DayFactory) NewDay(year, month, day int, bible *Bible) *Day {
+	var d Day
 
 	// time.Date automatically wraps dates that are invalid to the next month.
 	// e.g. April 31 -> May 1
 	date := time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.Local)
-	self.Year, self.Month, self.Day = date.Year(), int(date.Month()), date.Day()
+	d.Year, d.Month, d.Day = date.Year(), int(date.Month()), date.Day()
 
 	pdist, pyear := ComputePaschaDistance(year, month, day)
-	if useJulian {
-		self.JDN = JulianDateToJDN(year, month, day)
+	if self.useJulian {
+		d.JDN = JulianDateToJDN(year, month, day)
 	} else {
-		self.JDN = GregorianDateToJDN(year, month, day)
+		d.JDN = GregorianDateToJDN(year, month, day)
 	}
-	self.PDist = pdist
-	self.pyear = NewYear(pyear, useJulian)
-	self.Weekday = WeekDayFromPDist(self.PDist)
-	self.DoJump = doJump
+	d.PDist = pdist
+	d.Weekday = WeekDayFromPDist(d.PDist)
 
-	self.getCommemorations()
-	self.getReadings()
+	// Cache years in a thread-safe way
+	if y, ok := self.years.Load(pyear); ok {
+		d.pyear = y.(*Year)
+	} else {
+		d.pyear = NewYear(pyear, self.useJulian)
+		self.years.Store(pyear, d.pyear)
+	}
 
-	return &self
+	self.addCommemorations(&d)
+	self.addReadings(&d, bible)
+
+	return &d
 }
 
-func (self *Day) getCommemorations() {
+func (self *DayFactory) addCommemorations(day *Day) {
 	var rows *sql.Rows
 	var e error
 
-	floatIndex := self.pyear.LookupFloatIndex(self.PDist)
+	floatIndex := day.pyear.LookupFloatIndex(day.PDist)
 
 	if floatIndex > 0 {
 		rows, e = self.db.Query(
@@ -82,14 +98,14 @@ func (self *Day) getCommemorations() {
 			from days
 			where pdist = $1 or pdist = $2
 			or (month = $3 and day = $4)
-			order by feast_level desc`, self.PDist, floatIndex, self.Month, self.Day)
+			order by feast_level desc`, day.PDist, floatIndex, day.Month, day.Day)
 	} else {
 		rows, e = self.db.Query(
 			`select title, subtitle, feast_name, feast_level, saint_note, saint, fast, fast_exception
 			from days
 			where pdist = $1
 			or (month = $3 and day = $4)
-			order by feast_level desc`, self.PDist, self.Month, self.Day)
+			order by feast_level desc`, day.PDist, day.Month, day.Day)
 	}
 	defer rows.Close()
 
@@ -104,7 +120,7 @@ func (self *Day) getCommemorations() {
 
 		rows.Scan(&title, &subtitle, &feastName, &feastLevel, &saintNote, &saint, &fast, &fastException)
 		c := Commemoration{title, subtitle, feastName, saintNote, saint}
-		self.Commemorations = append(self.Commemorations, c)
+		day.Commemorations = append(day.Commemorations, c)
 
 		if feastLevel > overallFeastLevel {
 			overallFeastLevel = feastLevel
@@ -116,9 +132,9 @@ func (self *Day) getCommemorations() {
 			overallFastException = fastException
 		}
 
-		self.FastLevel = FastLevels[overallFastLevel]
-		self.FastException = FastExceptions[overallFastException]
-		self.FeastLevel = FeastLevels[overallFeastLevel]
+		day.FastLevel = FastLevels[overallFastLevel]
+		day.FastException = FastExceptions[overallFastException]
+		day.FeastLevel = FeastLevels[overallFeastLevel]
 	}
 }
 
@@ -152,49 +168,49 @@ func (self *Day) matinsGospel int {
 }
 */
 
-func (self *Day) getReadings() {
+func (self *DayFactory) addReadings(day *Day, bible *Bible) {
 	var gPDist, ePDist int
 	var jump int
 
 	// Compute the Lucan jump
-	_, _, _, sunAfter := SurroundingWeekends(self.pyear.Elevation)
-	if self.PDist > sunAfter && self.DoJump {
-		jump = self.pyear.LucanJump
+	_, _, _, sunAfter := SurroundingWeekends(day.pyear.Elevation)
+	if day.PDist > sunAfter && self.doJump {
+		jump = day.pyear.LucanJump
 	} else {
 		jump = 0
 	}
 
 	// Compute the adjusted pdists for epistle and gospel
-	if self.pyear.HasNoDailyReadings(self.PDist) {
+	if day.pyear.HasNoDailyReadings(day.PDist) {
 		gPDist, ePDist = 499, 499
 	} else {
 		limit := 272
 
 		// Compute adjusted pdist for the epistle
-		if self.PDist == 252 {
-			ePDist = self.pyear.Forefathers
-		} else if self.PDist > limit {
-			ePDist = self.JDN - self.pyear.NextPascha
+		if day.PDist == 252 {
+			ePDist = day.pyear.Forefathers
+		} else if day.PDist > limit {
+			ePDist = day.JDN - day.pyear.NextPascha
 		} else {
-			ePDist = self.PDist
+			ePDist = day.PDist
 		}
 
-		if WeekDayFromPDist(self.pyear.Theophany) < Tuesday {
+		if WeekDayFromPDist(day.pyear.Theophany) < Tuesday {
 			limit = 279
 		}
 
 		// Compute adjusted pdist for the Gospel
-		_, _, _, sunAfter := SurroundingWeekends(self.pyear.Theophany)
-		if self.PDist == 245-self.pyear.LucanJump {
-			gPDist = self.pyear.Forefathers + self.pyear.LucanJump
-		} else if self.PDist > sunAfter && self.Weekday == Sunday && self.pyear.ExtraSundays > 1 {
-			i := (self.PDist - sunAfter) / 7
-			gPDist = self.pyear.Reserves[i-1]
-		} else if self.PDist+jump > limit {
+		_, _, _, sunAfter := SurroundingWeekends(day.pyear.Theophany)
+		if day.PDist == 245-day.pyear.LucanJump {
+			gPDist = day.pyear.Forefathers + day.pyear.LucanJump
+		} else if day.PDist > sunAfter && day.Weekday == Sunday && day.pyear.ExtraSundays > 1 {
+			i := (day.PDist - sunAfter) / 7
+			gPDist = day.pyear.Reserves[i-1]
+		} else if day.PDist+jump > limit {
 			// Theophany stepback
-			gPDist = self.JDN - self.pyear.NextPascha
+			gPDist = day.JDN - day.pyear.NextPascha
 		} else {
-			gPDist = self.PDist + jump
+			gPDist = day.PDist + jump
 		}
 	}
 
@@ -238,7 +254,7 @@ func (self *Day) getReadings() {
 			or (pdist = $2 and source = 'Epistle')
 			or (pdist = $3 and source != 'Epistle' and source != 'Gospel')
 			or (pdist = $4)
-		order by ordering`, gPDist, ePDist, self.PDist, self.pyear.LookupFloatIndex(self.PDist))
+		order by ordering`, gPDist, ePDist, day.PDist, day.pyear.LookupFloatIndex(day.PDist))
 	defer rows.Close()
 
 	if e != nil {
@@ -248,12 +264,12 @@ func (self *Day) getReadings() {
 	for rows.Next() {
 		var reading Reading
 		rows.Scan(&reading.Source, &reading.Description, &reading.Book, &reading.Display, &reading.ShortDisplay)
-		if self.bible != nil {
-			passage := self.bible.Lookup(reading.ShortDisplay)
+		if bible != nil {
+			passage := bible.Lookup(reading.ShortDisplay)
 			if passage != nil {
 				reading.Passage = passage
 			}
 		}
-		self.Readings = append(self.Readings, reading)
+		day.Readings = append(day.Readings, reading)
 	}
 }
