@@ -2,7 +2,6 @@ package orthocal_test
 
 import (
 	"database/sql"
-	"encoding/json"
 	_ "github.com/mattn/go-sqlite3"
 	"orthocal"
 	"testing"
@@ -14,41 +13,70 @@ func TestDB(t *testing.T) {
 		t.Errorf("Got error opening database: %#n.", e)
 	}
 
-	bibledb, e := sql.Open("sqlite3", "kjv.db")
-	if e != nil {
-		t.Errorf("Got error opening database: %#n.", e)
-	}
-	bible := orthocal.NewBible(bibledb)
+	/*
+		bibledb, e := sql.Open("sqlite3", "kjv.db")
+		if e != nil {
+			t.Errorf("Got error opening database: %#n.", e)
+		}
+		bible := orthocal.NewBible(bibledb)
+	*/
 
 	factory := orthocal.NewDayFactory(false, true, db)
 
-	// Sunday of the Publican and Pharisee
-	// Reserves should be: 266, 161, 168
-	// ExtraSundays should be 3
-	day := factory.NewDay(2018, 1, 28, bible)
-	actual, _ := json.MarshalIndent(day, "", "\t")
-	t.Errorf("%s", actual)
+	/*
+		// Sunday of the Publican and Pharisee
+		day := factory.NewDay(2018, 1, 28, bible)
+		actual, _ := json.MarshalIndent(day, "", "\t")
+		t.Errorf("%s", actual)
 
-	// Cheesefare Sunday
-	day = factory.NewDay(2018, 2, 18, bible)
-	actual, _ = json.MarshalIndent(day, "", "\t")
-	t.Errorf("%s", actual)
+		// Cheesefare Sunday
+		day = factory.NewDay(2018, 2, 18, bible)
+		actual, _ = json.MarshalIndent(day, "", "\t")
+		t.Errorf("%s", actual)
+	*/
 
-	// Annunciation
-	day = factory.NewDay(2018, 3, 25, nil)
-	actual, _ = json.MarshalIndent(day, "", "\t")
-	t.Errorf("%s", actual)
+	t.Run("Annunciation Commemorations", func(t *testing.T) {
+		day := factory.NewDay(2018, 3, 25, nil)
 
-	// Veneration of the Cross - should include 7th Matins Gospel
-	day = factory.NewDay(2018, 3, 11, nil)
-	actual, _ = json.MarshalIndent(day, "", "\t")
-	t.Errorf("%s", actual)
+		count := 0
+		for _, c := range day.Commemorations {
+			if c.FeastName == "Annunciation Most Holy Theotokos" {
+				count++
+			}
+			if c.FeastName == "St Mary of Egypt" {
+				count++
+			}
+		}
 
-	// Memorial Saturday with no memorial readings
-	// Should not have John 5.24-30
-	day = factory.NewDay(2022, 3, 26, nil)
-	actual, _ = json.MarshalIndent(day, "", "\t")
-	t.Errorf("%s", actual)
+		if count != 2 {
+			t.Errorf("3/25/2018 should have The Annunciation and St. Mary of Egypt but doesn't.")
+		}
+	})
+
+	t.Run("Matins Gospel", func(t *testing.T) {
+		// Veneration of the Cross - should include 7th Matins Gospel
+		day := factory.NewDay(2018, 3, 11, nil)
+
+		for _, r := range day.Readings {
+			if r.Source == "7th Matins Gospel" {
+				return
+			}
+		}
+
+		t.Errorf("3/11/2018 should have the 7th Matins gospel but doesn't.")
+	})
+
+	t.Run("No memorial", func(t *testing.T) {
+		// Memorial Saturday with no memorial readings
+		// Should not have John 5.24-30
+		day := factory.NewDay(2022, 3, 26, nil)
+
+		for _, r := range day.Readings {
+			if r.ShortDisplay == "John 5.24-30" {
+				t.Errorf("3/26/2022 should not have John 5.24-30 but does.")
+			}
+		}
+	})
 
 	/*
 		today := time.Now()
@@ -62,6 +90,4 @@ func TestDB(t *testing.T) {
 			}
 		}
 	*/
-
-	t.Fail()
 }

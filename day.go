@@ -2,6 +2,7 @@ package orthocal
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"sync"
 	"time"
@@ -215,9 +216,6 @@ func (self *DayFactory) addReadings(day *Day, bible *Bible) {
 		}
 	}
 
-	// check if memorial saturday is cancelled
-	log.Printf("nomem: %t", day.HasNoMemorial())
-
 	noMatinsGospel, matinsGospel := self.matinsGospel(day)
 	log.Printf("Matins Gospel: %d, no matins gospel: %t", matinsGospel, noMatinsGospel)
 
@@ -250,34 +248,30 @@ func (self *DayFactory) addReadings(day *Day, bible *Bible) {
 	// Timings using Prepare instead of Query proved that the time saved on a
 	// month of days was around a couple milliseconds and not worth the added
 	// complexity.
-	var rows *sql.Rows
-	var e error
+	//
+	// Also, since no user provided strings are being used, it is safe to use
+	// string interpolation to build the SQL.
+	//
+	query := `
+		select source, r.desc, p.book, display, sdisplay
+		from readings r left join pericopes p
+		on (r.book=p.book and r.pericope=p.pericope)
+		where
+			   (pdist = $1 and source = 'Gospel' %s)
+			or (pdist = $2 and source = 'Epistle' %s)
+			or (pdist = $3 and source != 'Epistle' and source != 'Gospel')
+			or (pdist = $4)
+			or (pdist = $5 and pdist > 700)
+		order by ordering`
+
 	if day.HasNoMemorial() {
-		rows, e = self.db.Query(`
-			select source, r.desc, p.book, display, sdisplay
-			from readings r left join pericopes p
-			on (r.book=p.book and r.pericope=p.pericope)
-			where
-				   (pdist = $1 and source = 'Gospel' and r.desc != 'Departed')
-				or (pdist = $2 and source = 'Epistle' and r.desc != 'Departed')
-				or (pdist = $3 and source != 'Epistle' and source != 'Gospel')
-				or (pdist = $4)
-				or (pdist = $5 and pdist > 700)
-			order by ordering`, gPDist, ePDist, day.PDist, day.pyear.LookupFloatIndex(day.PDist), matinsGospel+700)
+		departed := "and r.desc != 'Departed'"
+		query = fmt.Sprintf(query, departed, departed)
 	} else {
-		rows, e = self.db.Query(`
-			select source, r.desc, p.book, display, sdisplay
-			from readings r left join pericopes p
-			on (r.book=p.book and r.pericope=p.pericope)
-			where
-				   (pdist = $1 and source = 'Gospel')
-				or (pdist = $2 and source = 'Epistle')
-				or (pdist = $3 and source != 'Epistle' and source != 'Gospel')
-				or (pdist = $4)
-				or (pdist = $5 and pdist > 700)
-			order by ordering`, gPDist, ePDist, day.PDist, day.pyear.LookupFloatIndex(day.PDist), matinsGospel+700)
+		query = fmt.Sprintf(query, "", "")
 	}
 
+	rows, e := self.db.Query(query, gPDist, ePDist, day.PDist, day.pyear.LookupFloatIndex(day.PDist), matinsGospel+700)
 	if e != nil {
 		log.Printf("Got error querying the database: %#n.", e)
 	}

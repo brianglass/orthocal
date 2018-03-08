@@ -33,7 +33,7 @@ func TestScriptureLookup(t *testing.T) {
 			passage := bible.Lookup(tc.reference)
 			// Not really a rigorous test, but it ought to catch a regression ;)
 			if len(passage) != tc.count {
-				t.Logf("%s should return %d verses but returned %d verses.", tc.reference, tc.count, len(passage))
+				t.Errorf("%s should return %d verses but returned %d verses.", tc.reference, tc.count, len(passage))
 			}
 		})
 	}

@@ -268,6 +268,7 @@ func (self *Year) computeNoDailyReadings() {
 	}
 }
 
+// Computes a list of of pascha distances for days with unread Sunday gospels
 func (self *Year) computeReserves() {
 	// TODO: store surrounding weekends in the struct
 	_, _, _, sunAfter := SurroundingWeekends(self.Theophany)
