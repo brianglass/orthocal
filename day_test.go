@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	_ "github.com/mattn/go-sqlite3"
 	"orthocal"
+	"strings"
 	"testing"
 )
 
@@ -46,10 +47,19 @@ func TestDB(t *testing.T) {
 			if c.FeastName == "St Mary of Egypt" {
 				count++
 			}
+			t.Log(c)
 		}
 
 		if count != 2 {
 			t.Errorf("3/25/2018 should have The Annunciation and St. Mary of Egypt but doesn't.")
+		}
+
+		if day.FeastLevel != "Major feast Theotokos" {
+			t.Errorf("3/25/2018 should have a feast level of 7 but doesn't.")
+		}
+
+		if strings.Contains(day.FastLevel, "Fish") {
+			t.Errorf("3/25/2018 should be a fish day but isn't.")
 		}
 	})
 

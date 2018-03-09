@@ -31,6 +31,7 @@ type Commemoration struct {
 	FeastName string
 	SaintNote string
 	Saint     string
+	Level     int
 }
 
 type Reading struct {
@@ -127,7 +128,7 @@ func (self *DayFactory) addCommemorations(day *Day) {
 		var feastLevel, fast, fastException int
 
 		rows.Scan(&title, &subtitle, &feastName, &feastLevel, &saintNote, &saint, &fast, &fastException)
-		c := Commemoration{title, subtitle, feastName, saintNote, saint}
+		c := Commemoration{title, subtitle, feastName, saintNote, saint, feastLevel}
 		day.Commemorations = append(day.Commemorations, c)
 
 		if feastLevel > overallFeastLevel {

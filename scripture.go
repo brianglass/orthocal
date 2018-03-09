@@ -46,6 +46,7 @@ func NewBible(db *sql.DB) *Bible {
 	Mark 15.22, 25, 33-41
 	1 John 2.7-17
 	Jude 1-10
+	1 Cor 5.6-8; Gal 3.13-14
 
 	NOTE: this function directly interpolates values from the reference into
 	SQL. This is safe as long as the provided reference is coming from the
@@ -55,7 +56,7 @@ func NewBible(db *sql.DB) *Bible {
 func (self *Bible) Lookup(reference string) Passage {
 	var passage Passage
 
-	sql := self.convertReferenceToSQL(reference)
+	sql := self.buildSQL(reference)
 	rows, e := self.db.Query(sql)
 	if e != nil {
 		log.Printf("Got error querying the database for scripture '%s': %#n.", reference, e)
@@ -72,60 +73,60 @@ func (self *Bible) Lookup(reference string) Passage {
 	return passage
 }
 
-func (self *Bible) convertReferenceToSQL(reference string) string {
+func (self *Bible) buildSQL(reference string) string {
 	var conditionals []string
 
-	sql := "select chapter, verse, content\nfrom bible\n"
+	sql := "select chapter, verse, content from bible\n"
 
-	// Get the book and specification
-	groups := refRe.FindStringSubmatch(reference)
-	book := strings.Replace(groups[1], " ", "", -1)
-	specification := groups[2]
+	for _, passage := range regexp.MustCompile(`\s*;\s*`).Split(reference, 4) {
+		// Get the book and specification
+		groups := refRe.FindStringSubmatch(passage)
+		book := strings.Replace(groups[1], " ", "", -1)
+		specification := groups[2]
 
-	sql += fmt.Sprintf("where book = \"%s\"\n", book)
+		// Create a conditional for each verse range in the specification
+		chapter := "1"
+		for _, verseRange := range regexp.MustCompile(`,\s*`).Split(specification, 4) {
+			var conditional string
 
-	// Create a conditional for each verse range in the specification
-	chapter := "1"
-	for _, verseRange := range regexp.MustCompile(`,\s*`).Split(specification, 4) {
-		var conditional string
+			m := rangeRe.FindStringSubmatch(verseRange)
 
-		m := rangeRe.FindStringSubmatch(verseRange)
-
-		defaultChapter := m[1]
-		if len(defaultChapter) == 0 {
-			// The chapter is implicit, so we use the chapter from the previous range
-			defaultChapter = chapter
-		}
-
-		if len(m[4]) > 0 {
-			if len(m[3]) > 0 && m[3] != m[1] {
-				// Handle ranges that span chapters
-				conditional = fmt.Sprintf(`((chapter = %s and verse >= %s) or (chapter = %s and verse <= %s))`, defaultChapter, m[2], m[3], m[4])
-			} else {
-				// Handle ranges that are contained within a single chapter
-				conditional = fmt.Sprintf(`(chapter = %s and verse between %s and %s)`, defaultChapter, m[2], m[4])
+			defaultChapter := m[1]
+			if len(defaultChapter) == 0 {
+				// The chapter is implicit, so we use the chapter from the previous range
+				defaultChapter = chapter
 			}
-		} else {
-			// Handle a single verse
-			conditional = fmt.Sprintf(`(chapter = "%s" and verse = "%s")`, defaultChapter, m[2])
-		}
 
-		conditionals = append(conditionals, conditional)
+			if len(m[4]) > 0 {
+				if len(m[3]) > 0 && m[3] != m[1] {
+					// Handle ranges that span chapters
+					conditional = fmt.Sprintf(`(book = "%s" and ((chapter = %s and verse >= %s) or (chapter = %s and verse <= %s)))`, book, defaultChapter, m[2], m[3], m[4])
+				} else {
+					// Handle ranges that are contained within a single chapter
+					conditional = fmt.Sprintf(`(book = "%s" and chapter = %s and verse between %s and %s)`, book, defaultChapter, m[2], m[4])
+				}
+			} else {
+				// Handle a single verse
+				conditional = fmt.Sprintf(`(book = "%s" and chapter = "%s" and verse = "%s")`, book, defaultChapter, m[2])
+			}
 
-		// Remember the most recently used chapter
-		if len(m[3]) > 0 || len(m[1]) > 0 {
-			chapter = m[3]
-			if len(chapter) == 0 {
-				chapter = m[1]
+			conditionals = append(conditionals, conditional)
+
+			// Remember the most recently used chapter
+			if len(m[3]) > 0 || len(m[1]) > 0 {
+				chapter = m[3]
+				if len(chapter) == 0 {
+					chapter = m[1]
+				}
 			}
 		}
 	}
 
 	if len(conditionals) > 1 {
 		// "Or" all the conditional clauses together
-		sql += "and (\n" + strings.Join(conditionals, "\nor ") + "\n)\n"
+		sql += "where (\n" + strings.Join(conditionals, "\nor ") + "\n)\n"
 	} else {
-		sql += "and " + conditionals[0] + "\n"
+		sql += "where " + conditionals[0] + "\n"
 	}
 
 	return sql
