@@ -110,3 +110,18 @@ func TestNoDaily(t *testing.T) {
 		}
 	}
 }
+
+func TestPeremias(t *testing.T) {
+	year := orthocal.NewYear(2018, false)
+
+	noparemias := []int{499, -43, -40, -30, -8}
+	paremias := []int{499, -44, -41, -31, -9}
+
+	if !reflect.DeepEqual(year.Paremias, paremias) {
+		t.Errorf("List of peremias is incorrect: %v.", year.Paremias)
+	}
+
+	if !reflect.DeepEqual(year.NoParemias, noparemias) {
+		t.Errorf("List of no-peremias is incorrect: %v.", year.NoParemias)
+	}
+}

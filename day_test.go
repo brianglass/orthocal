@@ -8,19 +8,17 @@ import (
 	"testing"
 )
 
-func TestDB(t *testing.T) {
+func TestDay(t *testing.T) {
 	db, e := sql.Open("sqlite3", "oca_calendar.db")
 	if e != nil {
 		t.Errorf("Got error opening database: %#n.", e)
 	}
 
-	/*
-		bibledb, e := sql.Open("sqlite3", "kjv.db")
-		if e != nil {
-			t.Errorf("Got error opening database: %#n.", e)
-		}
-		bible := orthocal.NewBible(bibledb)
-	*/
+	bibledb, e := sql.Open("sqlite3", "kjv.db")
+	if e != nil {
+		t.Errorf("Got error opening database: %#n.", e)
+	}
+	bible := orthocal.NewBible(bibledb)
 
 	factory := orthocal.NewDayFactory(false, true, db)
 
@@ -29,14 +27,9 @@ func TestDB(t *testing.T) {
 		day := factory.NewDay(2018, 1, 28, bible)
 		actual, _ := json.MarshalIndent(day, "", "\t")
 		t.Errorf("%s", actual)
-
-		// Cheesefare Sunday
-		day = factory.NewDay(2018, 2, 18, bible)
-		actual, _ = json.MarshalIndent(day, "", "\t")
-		t.Errorf("%s", actual)
 	*/
 
-	t.Run("Annunciation Commemorations", func(t *testing.T) {
+	t.Run("Annunciation", func(t *testing.T) {
 		day := factory.NewDay(2018, 3, 25, nil)
 
 		count := 0
@@ -47,19 +40,22 @@ func TestDB(t *testing.T) {
 			if c.FeastName == "St Mary of Egypt" {
 				count++
 			}
-			t.Log(c)
 		}
 
 		if count != 2 {
 			t.Errorf("3/25/2018 should have The Annunciation and St. Mary of Egypt but doesn't.")
 		}
 
-		if day.FeastLevel != "Major feast Theotokos" {
+		if day.FeastLevel != 7 {
 			t.Errorf("3/25/2018 should have a feast level of 7 but doesn't.")
 		}
 
 		if strings.Contains(day.FastLevel, "Fish") {
 			t.Errorf("3/25/2018 should be a fish day but isn't.")
+		}
+
+		if len(day.Readings) != 12 {
+			t.Errorf("3/25/2018 should have 12 scripture readings but has %d.", len(day.Readings))
 		}
 	})
 
@@ -85,6 +81,35 @@ func TestDB(t *testing.T) {
 			if r.ShortDisplay == "John 5.24-30" {
 				t.Errorf("3/26/2022 should not have John 5.24-30 but does.")
 			}
+		}
+	})
+
+	t.Run("Scriptures", func(t *testing.T) {
+		// Cheesefare Sunday
+		day := factory.NewDay(2018, 2, 18, bible)
+
+		if len(day.Readings) != 3 {
+			t.Errorf("2/18/2018 should have 3 readings but has %d.", len(day.Readings))
+		}
+
+		if len(day.Readings[0].Passage) != 12 {
+			t.Errorf("2/18/2018's first reading should be 12 verses long but is %d.", len(day.Readings[0].Passage))
+		}
+
+		if len(day.Readings[1].Passage) != 8 {
+			t.Errorf("2/18/2018's second reading should be 8 verses long but is %d.", len(day.Readings[1].Passage))
+		}
+
+		if len(day.Readings[2].Passage) != 8 {
+			t.Errorf("2/18/2018's third reading should be 8 verses long but is %d.", len(day.Readings[2].Passage))
+		}
+	})
+
+	t.Run("Paremias", func(t *testing.T) {
+		day := factory.NewDay(2018, 3, 8, bible)
+
+		if len(day.Readings) != 6 {
+			t.Errorf("3/8/2018 should have 6 readings but has %d.", len(day.Readings))
 		}
 	})
 

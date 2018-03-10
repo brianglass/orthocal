@@ -27,7 +27,9 @@ type Year struct {
 	// This is the number of days after the Elevation?
 	LucanJump int
 
-	Reserves []int
+	Reserves   []int
+	Paremias   []int
+	NoParemias []int
 
 	// unexported
 	floats    []float
@@ -55,6 +57,7 @@ func NewYear(year int, useJulian bool) *Year {
 	self.computeFloats()
 	self.computeNoDailyReadings()
 	self.computeReserves()
+	self.computeParemias()
 
 	return &self
 }
@@ -76,7 +79,7 @@ func (self *Year) HasNoDailyReadings(pdist int) bool {
 	return exists
 }
 
-func (self *Year) dateToPDist(month, day, year int) int {
+func (self *Year) DateToPDist(month, day, year int) int {
 	if self.useJulian {
 		// TODO: Need to test this and confirm it's valid
 		return JulianDateToJDN(year, month, day) - self.Pascha
@@ -89,13 +92,13 @@ func (self *Year) dateToPDist(month, day, year int) int {
 func (self *Year) computePDists() {
 	var pdist, weekday int // for intermediate results
 
-	self.Theophany = self.dateToPDist(1, 6, self.Year+1)
-	self.Finding = self.dateToPDist(2, 24, self.Year)
-	self.Annunciation = self.dateToPDist(3, 25, self.Year)
-	self.PeterAndPaul = self.dateToPDist(6, 29, self.Year)
+	self.Theophany = self.DateToPDist(1, 6, self.Year+1)
+	self.Finding = self.DateToPDist(2, 24, self.Year)
+	self.Annunciation = self.DateToPDist(3, 25, self.Year)
+	self.PeterAndPaul = self.DateToPDist(6, 29, self.Year)
 
 	// The Fathers of the Sixth Ecumenical Council falls on the Sunday nearest 7/16
-	pdist = self.dateToPDist(7, 16, self.Year)
+	pdist = self.DateToPDist(7, 16, self.Year)
 	weekday = WeekDayFromPDist(pdist)
 	if weekday < Thursday {
 		self.FathersSix = pdist - weekday
@@ -103,13 +106,13 @@ func (self *Year) computePDists() {
 		self.FathersSix = pdist + 7 - weekday
 	}
 
-	self.Beheading = self.dateToPDist(8, 29, self.Year)
-	self.NativityTheotokos = self.dateToPDist(9, 8, self.Year)
-	self.Elevation = self.dateToPDist(9, 14, self.Year)
+	self.Beheading = self.DateToPDist(8, 29, self.Year)
+	self.NativityTheotokos = self.DateToPDist(9, 8, self.Year)
+	self.Elevation = self.DateToPDist(9, 14, self.Year)
 
 	// The Fathers of the Seventh Ecumenical Council falls on the Sunday
 	// following 10/11 or 10/11 itself if it is a Sunday.
-	pdist = self.dateToPDist(10, 11, self.Year)
+	pdist = self.DateToPDist(10, 11, self.Year)
 	weekday = WeekDayFromPDist(pdist)
 	if weekday > Sunday {
 		pdist += 7 - weekday
@@ -117,14 +120,14 @@ func (self *Year) computePDists() {
 	self.FathersSeven = pdist
 
 	// Demetrius Saturday is the Saturday before 10/26
-	pdist = self.dateToPDist(10, 26, self.Year)
+	pdist = self.DateToPDist(10, 26, self.Year)
 	self.DemetriusSaturday = pdist - WeekDayFromPDist(pdist) - 1
 
 	// The Synaxis of the Unmercenaries is the Sunday following 11/1
-	pdist = self.dateToPDist(11, 1, self.Year)
+	pdist = self.DateToPDist(11, 1, self.Year)
 	self.SynaxisUnmercenaries = pdist + 7 - WeekDayFromPDist(pdist)
 
-	self.Nativity = self.dateToPDist(12, 25, self.Year)
+	self.Nativity = self.DateToPDist(12, 25, self.Year)
 
 	// Forefathers Sunday is the week before the week of Nativity
 	weekday = WeekDayFromPDist(self.Nativity)
@@ -217,7 +220,7 @@ func (self *Year) computeFloats() {
 	self.addFloat(1030, sunAfterTheophany)
 
 	// New Martyrs of Russia (OCA) is the Sunday on or before 1/31
-	martyrs := self.dateToPDist(1, 31, self.Year)
+	martyrs := self.DateToPDist(1, 31, self.Year)
 	weekday := WeekDayFromPDist(martyrs)
 	if weekday != Sunday {
 		// The Sunday before 1/31
@@ -283,6 +286,25 @@ func (self *Year) computeReserves() {
 			for i := 175 - remainder*7; i < 169; i += 7 {
 				self.Reserves = append(self.Reserves, i)
 			}
+		}
+	}
+}
+
+// minor feasts on weekdays in lent have their paremias moved to previous day
+func (self *Year) computeParemias() {
+	self.Paremias = append(self.Paremias, 499)
+	self.NoParemias = append(self.NoParemias, 499)
+
+	days := []struct{ month, day int }{
+		{2, 24}, {2, 27}, {3, 9}, {3, 31}, {4, 7}, {4, 23}, {4, 25}, {4, 30},
+	}
+
+	for _, day := range days {
+		pdist := self.DateToPDist(day.month, day.day, self.Year)
+		weekday := WeekDayFromPDist(pdist)
+		if pdist > -44 && pdist < -7 && weekday > 1 {
+			self.Paremias = append(self.Paremias, pdist-1)
+			self.NoParemias = append(self.NoParemias, pdist)
 		}
 	}
 }

@@ -15,14 +15,14 @@ type Day struct {
 	Month          int
 	Day            int
 	Weekday        int
-	FeastLevel     string
+	FeastLevel     int
+	FeastLevelDesc string
 	FastLevel      string
 	FastException  string
 	Commemorations []Commemoration
 	Readings       []Reading
 
-	feastLevel int
-	pyear      *Year
+	pyear *Year
 }
 
 type Commemoration struct {
@@ -116,11 +116,12 @@ func (self *DayFactory) addCommemorations(day *Day) {
 			or (month = $3 and day = $4)
 			order by feast_level desc`, day.PDist, day.Month, day.Day)
 	}
-	defer rows.Close()
 
 	if e != nil {
 		log.Printf("Got error querying the database: %#n.", e)
+		return
 	}
+	defer rows.Close()
 
 	overallFastLevel, overallFastException, overallFeastLevel := 0, 0, -2
 	for rows.Next() {
@@ -143,9 +144,8 @@ func (self *DayFactory) addCommemorations(day *Day) {
 
 		day.FastLevel = FastLevels[overallFastLevel]
 		day.FastException = FastExceptions[overallFastException]
-		day.FeastLevel = FeastLevels[overallFeastLevel]
-
-		day.feastLevel = overallFeastLevel
+		day.FeastLevel = overallFeastLevel
+		day.FeastLevelDesc = FeastLevels[overallFeastLevel]
 	}
 }
 
@@ -153,7 +153,7 @@ func (self *DayFactory) matinsGospel(day *Day) (bool, int) {
 	if day.Weekday == Sunday {
 		if day.PDist > -8 && day.PDist < 50 {
 			return false, 0
-		} else if day.feastLevel < 7 {
+		} else if day.FeastLevel < 7 {
 			pbase := day.PDist
 			if day.PDist < 0 {
 				pbase = day.JDN - day.pyear.PreviousPascha
@@ -217,64 +217,45 @@ func (self *DayFactory) addReadings(day *Day, bible *Bible) {
 		}
 	}
 
-	noMatinsGospel, matinsGospel := self.matinsGospel(day)
-	log.Printf("Matins Gospel: %d, no matins gospel: %t", matinsGospel, noMatinsGospel)
+	_, matinsGospel := self.matinsGospel(day)
 
-	/*
-			if ($day['no_memorial']) {$nomem=" and reDesc != 'Departed'";} else {$nomem="";}
-			if ($day['gday'] != 499)
-			  { $conditions[]="(rePday = {$day['gday']} and reType = 'Gospel' $nomem)"; }
-			if ($day['eday'] != 499)
-			  { $conditions[]="(rePday = {$day['eday']} and reType = 'Epistle' $nomem)"; }
-			$conditions[]="(rePday = {$day['pday']} and reType != 'Epistle' and reType !='Gospel')";
-			if ($day['fday'] && $day['fday'] != 499)
-			  { $conditions[]="(rePday = {$day['fday']})"; }
-			if ($day['matins_gospel'])
-			  { $mg = $day['matins_gospel']+700; $conditions[]="(rePday = $mg)"; }
+	// TODO: Handle arbitrary exceptions
 
-			if ($day['no_matins_gospel']) {$x="and reType != 'Matins Gospel'";} else {$x="";}
-			if ($day['no_paremias']) {$y="and reType != 'Vespers'";} else {$y="";}
-		// no readings for leavetaking annunciation on non-liturgy day
-			if ($day['month']==3 && $day['day']==26 && ($day['dow']==1 || $day['dow']==2 || $day['dow']==4))
-			{$z="and reDesc != 'Theotokos'";} else {$z="";}
-			  $conditions[]="((reMonth = {$day['menaion_month']} and reDay = {$day['menaion_day']}) $y $x $z)";
-			if ($day['get_paremias'])
-			  { $pa=getdate(mktime(0, 0, 0, $day['month'], $day['day']+1, $day['year']));
-			    $conditions[]="(reMonth = {$pa['mon']} and reDay = {$pa['mday']} and reType = 'Vespers')"; }
-		// make sql
-			$conds = implode(" or ", $conditions);
-			$q = "select readings.*, zachalos.zaDisplay as display, zachalos.zaSdisplay as sdisplay from readings left join zachalos on (zachalos.zaBook=readings.reBook and zachalos.zaNum=readings.reNum) where $conds order by reIndex";
-	*/
+	var paremias string
+	for _, p := range day.pyear.Paremias {
+		if day.PDist == p {
+			date := time.Date(day.Year, time.Month(day.Month), day.Day+1, 0, 0, 0, 0, time.Local)
+			paremias = fmt.Sprintf("or (r.month = %d and r.day = %d and source = 'Vespers')", date.Month(), date.Day())
+			break
+		}
+	}
 
-	// Timings using Prepare instead of Query proved that the time saved on a
-	// month of days was around a couple milliseconds and not worth the added
-	// complexity.
-	//
-	// Also, since no user provided strings are being used, it is safe to use
+	var departed string
+	if day.HasNoMemorial() {
+		departed = "and r.desc != 'Departed'"
+	}
+
+	// Since no user provided strings are being used, it is safe to use
 	// string interpolation to build the SQL.
-	//
 	query := `
 		select source, r.desc, p.book, display, sdisplay
 		from readings r left join pericopes p
 		on (r.book=p.book and r.pericope=p.pericope)
 		where
-			   (pdist = $1 and source = 'Gospel' %s)
-			or (pdist = $2 and source = 'Epistle' %s)
-			or (pdist = $3 and source != 'Epistle' and source != 'Gospel')
-			or (pdist = $4)
-			or (pdist = $5 and pdist > 700)
+			   (pdist = %d and source = 'Gospel' %s)
+			or (pdist = %d and source = 'Epistle' %s)
+			or (pdist = %d and source != 'Epistle' and source != 'Gospel')
+			or (pdist = %d)
+			or (pdist = %d and pdist > 700)
+			%s
 		order by ordering`
 
-	if day.HasNoMemorial() {
-		departed := "and r.desc != 'Departed'"
-		query = fmt.Sprintf(query, departed, departed)
-	} else {
-		query = fmt.Sprintf(query, "", "")
-	}
+	query = fmt.Sprintf(query, gPDist, departed, ePDist, departed, day.PDist, day.pyear.LookupFloatIndex(day.PDist), matinsGospel+700, paremias)
 
-	rows, e := self.db.Query(query, gPDist, ePDist, day.PDist, day.pyear.LookupFloatIndex(day.PDist), matinsGospel+700)
+	rows, e := self.db.Query(query)
 	if e != nil {
 		log.Printf("Got error querying the database: %#n.", e)
+		return
 	}
 	defer rows.Close()
 
