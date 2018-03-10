@@ -9,9 +9,9 @@ import (
 )
 
 type Verse struct {
-	Chapter uint16
-	Verse   uint16
-	Content string
+	Chapter uint16 `json:"chapter"`
+	Verse   uint16 `json:"verse"`
+	Content string `json:"content"`
 }
 
 type Passage []Verse

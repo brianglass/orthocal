@@ -10,38 +10,38 @@ import (
 )
 
 type Day struct {
-	PDist          int
-	JDN            int
-	Year           int
-	Month          int
-	Day            int
-	Weekday        int
-	FeastLevel     int
-	FeastLevelDesc string
-	FastLevel      string
-	FastException  string
-	Commemorations []Commemoration
-	Readings       []Reading
+	PDist          int             `json:"pascha_distance"`
+	JDN            int             `json:"julian_day_number"`
+	Year           int             `json:"year"`
+	Month          int             `json:"month"`
+	Day            int             `json:"day"`
+	Weekday        int             `json:"weekday"`
+	FeastLevel     int             `json:"feast_level"`
+	FeastLevelDesc string          `json:"feast_level_description"`
+	FastLevel      string          `json:"fast_level"`
+	FastException  string          `json:"fast_exception"`
+	Commemorations []Commemoration `json:"commemorations"`
+	Readings       []Reading       `json:"readings"`
 
 	pyear *Year
 }
 
 type Commemoration struct {
-	Title     string
-	Subtitle  string
-	FeastName string
-	SaintNote string
-	Saint     string
-	Level     int
+	Title     string `json:"title"`
+	Subtitle  string `json:"subtitle"`
+	FeastName string `json:"feast_name"`
+	SaintNote string `json:"saint_note"`
+	Saint     string `json:"saint"`
+	Level     int    `json:"level"`
 }
 
 type Reading struct {
-	Source       string
-	Book         string
-	Description  string
-	Display      string
-	ShortDisplay string
-	Passage      Passage
+	Source       string  `json:"source"`
+	Book         string  `json:"book"`
+	Description  string  `json:"description"`
+	Display      string  `json:"display"`
+	ShortDisplay string  `json:"short_display"`
+	Passage      Passage `json:"passage"`
 }
 
 func (self *Day) HasNoMemorial() bool {

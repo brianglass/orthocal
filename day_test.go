@@ -2,6 +2,7 @@ package orthocal_test
 
 import (
 	"database/sql"
+	"encoding/json"
 	_ "github.com/mattn/go-sqlite3"
 	"orthocal"
 	"strings"
@@ -22,12 +23,10 @@ func TestDay(t *testing.T) {
 
 	factory := orthocal.NewDayFactory(false, true, db)
 
-	/*
-		// Sunday of the Publican and Pharisee
-		day := factory.NewDay(2018, 1, 28, bible)
-		actual, _ := json.MarshalIndent(day, "", "\t")
-		t.Errorf("%s", actual)
-	*/
+	// Sunday of the Publican and Pharisee
+	day := factory.NewDay(2018, 1, 28, bible)
+	actual, _ := json.MarshalIndent(day, "", "\t")
+	t.Errorf("%s", actual)
 
 	t.Run("Annunciation", func(t *testing.T) {
 		day := factory.NewDay(2018, 3, 25, nil)
