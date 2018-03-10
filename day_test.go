@@ -113,6 +113,14 @@ func TestDay(t *testing.T) {
 		}
 	})
 
+	t.Run("Sebaste", func(t *testing.T) {
+		day := factory.NewDay(2018, 3, 9, bible)
+
+		if len(day.Readings) != 6 {
+			t.Errorf("3/9/2018 should have 6 readings but has %d.", len(day.Readings))
+		}
+	})
+
 	/*
 		today := time.Now()
 		for {

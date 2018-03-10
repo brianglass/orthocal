@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strings"
 	"sync"
 	"time"
 )
@@ -155,7 +156,7 @@ func (self *DayFactory) matinsGospel(day *Day) (bool, int) {
 			return false, 0
 		} else if day.FeastLevel < 7 {
 			pbase := day.PDist
-			if day.PDist < 0 {
+			if pbase < 0 {
 				pbase = day.JDN - day.pyear.PreviousPascha
 			}
 
@@ -174,13 +175,12 @@ func (self *DayFactory) matinsGospel(day *Day) (bool, int) {
 func (self *DayFactory) addReadings(day *Day, bible *Bible) {
 	var gPDist, ePDist int
 	var jump int
+	var conditionals []string
 
 	// Compute the Lucan jump
 	_, _, _, sunAfter := SurroundingWeekends(day.pyear.Elevation)
 	if day.PDist > sunAfter && self.doJump {
 		jump = day.pyear.LucanJump
-	} else {
-		jump = 0
 	}
 
 	// Compute the adjusted pdists for epistle and gospel
@@ -217,23 +217,48 @@ func (self *DayFactory) addReadings(day *Day, bible *Bible) {
 		}
 	}
 
-	_, matinsGospel := self.matinsGospel(day)
-
-	// TODO: Handle arbitrary exceptions
-
-	var paremias string
-	for _, p := range day.pyear.Paremias {
-		if day.PDist == p {
-			date := time.Date(day.Year, time.Month(day.Month), day.Day+1, 0, 0, 0, 0, time.Local)
-			paremias = fmt.Sprintf("or (r.month = %d and r.day = %d and source = 'Vespers')", date.Month(), date.Day())
-			break
-		}
-	}
-
 	var departed string
 	if day.HasNoMemorial() {
 		departed = "and r.desc != 'Departed'"
 	}
+
+	// Conditional for floats
+	floatIndex := day.pyear.LookupFloatIndex(day.PDist)
+	if floatIndex != 499 {
+		conditionals = append(conditionals, fmt.Sprintf("or (pdist = %d)", floatIndex))
+	}
+
+	// Conditional for Matins Gospel
+	hasMatinsGospel, matinsGospel := self.matinsGospel(day)
+	if matinsGospel != 0 {
+		conditionals = append(conditionals, fmt.Sprintf("or (pdist = %d)", matinsGospel+700))
+	}
+
+	// Conditional for Paremias
+	if day.pyear.HasParemias(day.PDist) {
+		date := time.Date(day.Year, time.Month(day.Month), day.Day+1, 0, 0, 0, 0, time.Local)
+		paremias := fmt.Sprintf("or (r.month = %d and r.day = %d and source = 'Vespers')", date.Month(), date.Day())
+		conditionals = append(conditionals, paremias)
+	}
+
+	// Build Conditional for Month/Day (i.e. non-pdist)
+	var m string
+	if !hasMatinsGospel {
+		m = "and r.source != 'Matins Gospel'"
+	}
+	var p string
+	if day.pyear.HasNoParemias(day.PDist) {
+		p = "and r.source != 'Vespers'"
+	}
+	var a string
+	if day.Month == 3 && day.Day == 26 && (day.Weekday == Monday || day.Weekday == Tuesday || day.Weekday == Thursday) {
+		// no readings for leavetaking annunciation on non-liturgy day
+		a = "and r.desc != 'Theotokos'"
+	}
+	dates := fmt.Sprintf("or (r.month = %d and r.day = %d %s %s %s)", day.Month, day.Day, m, p, a)
+	conditionals = append(conditionals, dates)
+
+	// TODO: Handle arbitrary exceptions
 
 	// Since no user provided strings are being used, it is safe to use
 	// string interpolation to build the SQL.
@@ -245,12 +270,10 @@ func (self *DayFactory) addReadings(day *Day, bible *Bible) {
 			   (pdist = %d and source = 'Gospel' %s)
 			or (pdist = %d and source = 'Epistle' %s)
 			or (pdist = %d and source != 'Epistle' and source != 'Gospel')
-			or (pdist = %d)
-			or (pdist = %d and pdist > 700)
 			%s
 		order by ordering`
 
-	query = fmt.Sprintf(query, gPDist, departed, ePDist, departed, day.PDist, day.pyear.LookupFloatIndex(day.PDist), matinsGospel+700, paremias)
+	query = fmt.Sprintf(query, gPDist, departed, ePDist, departed, day.PDist, strings.Join(conditionals, " "))
 
 	rows, e := self.db.Query(query)
 	if e != nil {
@@ -259,6 +282,7 @@ func (self *DayFactory) addReadings(day *Day, bible *Bible) {
 	}
 	defer rows.Close()
 
+	// TODO: Move Lenten Matins Gospels to the top
 	for rows.Next() {
 		var reading Reading
 		rows.Scan(&reading.Source, &reading.Description, &reading.Book, &reading.Display, &reading.ShortDisplay)

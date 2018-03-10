@@ -74,6 +74,26 @@ func (self *Year) LookupFloatIndex(pdist int) int {
 	return 499
 }
 
+func (self *Year) HasParemias(pdist int) bool {
+	for _, p := range self.Paremias {
+		if p == pdist {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (self *Year) HasNoParemias(pdist int) bool {
+	for _, p := range self.NoParemias {
+		if p == pdist {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (self *Year) HasNoDailyReadings(pdist int) bool {
 	_, exists := self.noDaily[pdist]
 	return exists
