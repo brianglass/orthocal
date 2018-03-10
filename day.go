@@ -150,72 +150,10 @@ func (self *DayFactory) addCommemorations(day *Day) {
 	}
 }
 
-func (self *DayFactory) matinsGospel(day *Day) (bool, int) {
-	if day.Weekday == Sunday {
-		if day.PDist > -8 && day.PDist < 50 {
-			return false, 0
-		} else if day.FeastLevel < 7 {
-			pbase := day.PDist
-			if pbase < 0 {
-				pbase = day.JDN - day.pyear.PreviousPascha
-			}
-
-			x := (pbase - 49) % 77
-			if x == 0 {
-				x = 77
-			}
-
-			return false, x / 7
-		}
-	}
-
-	return true, 0
-}
-
 func (self *DayFactory) addReadings(day *Day, bible *Bible) {
-	var gPDist, ePDist int
-	var jump int
 	var conditionals []string
 
-	// Compute the Lucan jump
-	_, _, _, sunAfter := SurroundingWeekends(day.pyear.Elevation)
-	if day.PDist > sunAfter && self.doJump {
-		jump = day.pyear.LucanJump
-	}
-
-	// Compute the adjusted pdists for epistle and gospel
-	if day.pyear.HasNoDailyReadings(day.PDist) {
-		gPDist, ePDist = 499, 499
-	} else {
-		limit := 272
-
-		// Compute adjusted pdist for the epistle
-		if day.PDist == 252 {
-			ePDist = day.pyear.Forefathers
-		} else if day.PDist > limit {
-			ePDist = day.JDN - day.pyear.NextPascha
-		} else {
-			ePDist = day.PDist
-		}
-
-		if WeekDayFromPDist(day.pyear.Theophany) < Tuesday {
-			limit = 279
-		}
-
-		// Compute adjusted pdist for the Gospel
-		_, _, _, sunAfter := SurroundingWeekends(day.pyear.Theophany)
-		if day.PDist == 245-day.pyear.LucanJump {
-			gPDist = day.pyear.Forefathers + day.pyear.LucanJump
-		} else if day.PDist > sunAfter && day.Weekday == Sunday && day.pyear.ExtraSundays > 1 {
-			i := (day.PDist - sunAfter) / 7
-			gPDist = day.pyear.Reserves[i-1]
-		} else if day.PDist+jump > limit {
-			// Theophany stepback
-			gPDist = day.JDN - day.pyear.NextPascha
-		} else {
-			gPDist = day.PDist + jump
-		}
-	}
+	ePDist, gPDist := self.getAdjustedPDists(day)
 
 	var departed string
 	if day.HasNoMemorial() {
@@ -294,4 +232,73 @@ func (self *DayFactory) addReadings(day *Day, bible *Bible) {
 		}
 		day.Readings = append(day.Readings, reading)
 	}
+}
+
+func (self *DayFactory) matinsGospel(day *Day) (bool, int) {
+	if day.Weekday == Sunday {
+		if day.PDist > -8 && day.PDist < 50 {
+			return false, 0
+		} else if day.FeastLevel < 7 {
+			pbase := day.PDist
+			if pbase < 0 {
+				pbase = day.JDN - day.pyear.PreviousPascha
+			}
+
+			x := (pbase - 49) % 77
+			if x == 0 {
+				x = 77
+			}
+
+			return false, x / 7
+		}
+	}
+
+	return true, 0
+}
+
+func (self *DayFactory) getAdjustedPDists(day *Day) (int, int) {
+	var gPDist, ePDist int
+	var jump int
+
+	// Compute the Lucan jump
+	_, _, _, sunAfter := SurroundingWeekends(day.pyear.Elevation)
+	if day.PDist > sunAfter && self.doJump {
+		jump = day.pyear.LucanJump
+	}
+
+	// Compute the adjusted pdists for epistle and gospel
+	if day.pyear.HasNoDailyReadings(day.PDist) {
+		gPDist, ePDist = 499, 499
+	} else {
+		limit := 272
+
+		// Compute adjusted pdist for the epistle
+		if day.PDist == 252 {
+			ePDist = day.pyear.Forefathers
+		} else if day.PDist > limit {
+			ePDist = day.JDN - day.pyear.NextPascha
+		} else {
+			ePDist = day.PDist
+		}
+
+		if WeekDayFromPDist(day.pyear.Theophany) < Tuesday {
+			limit = 279
+		}
+
+		// Compute adjusted pdist for the Gospel
+		_, _, _, sunAfter := SurroundingWeekends(day.pyear.Theophany)
+		if day.PDist == 245-day.pyear.LucanJump {
+			gPDist = day.pyear.Forefathers + day.pyear.LucanJump
+		} else if day.PDist > sunAfter && day.Weekday == Sunday && day.pyear.ExtraSundays > 1 {
+			i := (day.PDist - sunAfter) / 7
+			gPDist = day.pyear.Reserves[i-1]
+		} else if day.PDist+jump > limit {
+			// Theophany stepback
+			gPDist = day.JDN - day.pyear.NextPascha
+		} else {
+			gPDist = day.PDist + jump
+		}
+	}
+
+	return ePDist, gPDist
 }
