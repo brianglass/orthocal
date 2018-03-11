@@ -34,11 +34,11 @@ func TestDay(t *testing.T) {
 		day := factory.NewDay(2018, 3, 25, nil)
 
 		count := 0
-		for _, c := range day.Commemorations {
-			if c.FeastName == "Annunciation Most Holy Theotokos" {
+		for _, f := range day.Feasts {
+			if f == "Annunciation Most Holy Theotokos" {
 				count++
 			}
-			if c.FeastName == "St Mary of Egypt" {
+			if f == "St Mary of Egypt" {
 				count++
 			}
 		}
@@ -131,14 +131,6 @@ func TestDay(t *testing.T) {
 		}
 		if len(set) != 6 {
 			t.Errorf("3/9/2018 should not have duplicate readings.")
-		}
-	})
-
-	t.Run("Blank Commemorations", func(t *testing.T) {
-		day := factory.NewDay(2018, 2, 1, bible)
-
-		if len(day.Commemorations) != 1 {
-			t.Errorf("2/1/2018 should have 1 commemoration but has %d.", len(day.Commemorations))
 		}
 	})
 

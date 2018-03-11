@@ -10,29 +10,23 @@ import (
 )
 
 type Day struct {
-	PDist          int             `json:"pascha_distance"`
-	JDN            int             `json:"julian_day_number"`
-	Year           int             `json:"year"`
-	Month          int             `json:"month"`
-	Day            int             `json:"day"`
-	Weekday        int             `json:"weekday"`
-	FeastLevel     int             `json:"feast_level"`
-	FeastLevelDesc string          `json:"feast_level_description"`
-	FastLevel      string          `json:"fast_level"`
-	FastException  string          `json:"fast_exception"`
-	Commemorations []Commemoration `json:"commemorations"`
-	Readings       []Reading       `json:"readings"`
+	PDist          int       `json:"pascha_distance"`
+	JDN            int       `json:"julian_day_number"`
+	Year           int       `json:"year"`
+	Month          int       `json:"month"`
+	Day            int       `json:"day"`
+	Weekday        int       `json:"weekday"`
+	Titles         []string  `json:"titles"`
+	FeastLevel     int       `json:"feast_level"`
+	FeastLevelDesc string    `json:"feast_level_description"`
+	Feasts         []string  `json:"feasts"`
+	FastLevel      string    `json:"fast_level"`
+	FastException  string    `json:"fast_exception"`
+	Saints         []string  `json:"saints"`
+	ServiceNotes   []string  `json:"service_notes"`
+	Readings       []Reading `json:"readings"`
 
 	pyear *Year
-}
-
-type Commemoration struct {
-	Title     string `json:"title"`
-	Subtitle  string `json:"subtitle"`
-	FeastName string `json:"feast_name"`
-	SaintNote string `json:"saint_note"`
-	Saint     string `json:"saint"`
-	Level     int    `json:"level"`
 }
 
 type Reading struct {
@@ -104,18 +98,16 @@ func (self *DayFactory) addCommemorations(day *Day) {
 
 	if floatIndex != 0 && floatIndex != 499 {
 		rows, e = self.db.Query(
-			`select title, subtitle, feast_name, feast_level, saint_note, saint, fast, fast_exception
+			`select title, subtitle, feast_name, feast_level, service_note, saint, fast, fast_exception
 			from days
 			where pdist = $1 or pdist = $2
-			or (month = $3 and day = $4)
-			order by feast_level desc`, day.PDist, floatIndex, day.Month, day.Day)
+			or (month = $3 and day = $4)`, day.PDist, floatIndex, day.Month, day.Day)
 	} else {
 		rows, e = self.db.Query(
-			`select title, subtitle, feast_name, feast_level, saint_note, saint, fast, fast_exception
+			`select title, subtitle, feast_name, feast_level, service_note, saint, fast, fast_exception
 			from days
 			where pdist = $1
-			or (month = $3 and day = $4)
-			order by feast_level desc`, day.PDist, day.Month, day.Day)
+			or (month = $3 and day = $4)`, day.PDist, day.Month, day.Day)
 	}
 
 	if e != nil {
@@ -126,31 +118,43 @@ func (self *DayFactory) addCommemorations(day *Day) {
 
 	overallFastLevel, overallFastException, overallFeastLevel := 0, 0, -2
 	for rows.Next() {
-		var title, subtitle, feastName, saintNote, saint string
+		var title, subtitle, feastName, serviceNote, saint string
 		var feastLevel, fast, fastException int
 
-		rows.Scan(&title, &subtitle, &feastName, &feastLevel, &saintNote, &saint, &fast, &fastException)
+		rows.Scan(&title, &subtitle, &feastName, &feastLevel, &serviceNote, &saint, &fast, &fastException)
 
-		// Add the non-blank commemorations to the list (the DB has some blank ones)
-		if len(title)+len(feastName)+len(saintNote)+len(saint) > 0 {
-			c := Commemoration{title, subtitle, feastName, saintNote, saint, feastLevel}
-			day.Commemorations = append(day.Commemorations, c)
-
-			if feastLevel > overallFeastLevel {
-				overallFeastLevel = feastLevel
-			}
-			if fast > overallFastLevel {
-				overallFastLevel = fast
-			}
-			if fastException > overallFastException {
-				overallFastException = fastException
-			}
-
-			day.FastLevel = FastLevels[overallFastLevel]
-			day.FastException = FastExceptions[overallFastException]
-			day.FeastLevel = overallFeastLevel
-			day.FeastLevelDesc = FeastLevels[overallFeastLevel]
+		if len(subtitle) > 0 {
+			title = fmt.Sprintf("%s: %s", title, subtitle)
 		}
+
+		if len(title) > 0 {
+			day.Titles = append(day.Titles, title)
+		}
+		if len(saint) > 0 {
+			day.Saints = append(day.Saints, saint)
+		}
+		if len(feastName) > 0 {
+			day.Feasts = append(day.Feasts, feastName)
+		}
+		if len(serviceNote) > 0 {
+			day.ServiceNotes = append(day.ServiceNotes, serviceNote)
+		}
+
+		// Composite values
+		if feastLevel > overallFeastLevel {
+			overallFeastLevel = feastLevel
+		}
+		if fast > overallFastLevel {
+			overallFastLevel = fast
+		}
+		if fastException > overallFastException {
+			overallFastException = fastException
+		}
+
+		day.FastLevel = FastLevels[overallFastLevel]
+		day.FastException = FastExceptions[overallFastException]
+		day.FeastLevel = overallFeastLevel
+		day.FeastLevelDesc = FeastLevels[overallFeastLevel]
 	}
 }
 

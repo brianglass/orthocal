@@ -7,7 +7,7 @@ create table if not exists days (
   feast_name varchar(255) default null,
   feast_level smallint not null default 0,
   service smallint not null default 0,
-  saint_note varchar(64) default null,
+  service_note varchar(64) default null,
   saint varchar(128) default null,
   fast smallint not null default 0,
   fast_exception smallint not null default 0,
