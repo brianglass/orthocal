@@ -102,7 +102,7 @@ func (self *DayFactory) addCommemorations(day *Day) {
 
 	floatIndex := day.pyear.LookupFloatIndex(day.PDist)
 
-	if floatIndex > 0 {
+	if floatIndex != 0 && floatIndex != 499 {
 		rows, e = self.db.Query(
 			`select title, subtitle, feast_name, feast_level, saint_note, saint, fast, fast_exception
 			from days
@@ -130,23 +130,27 @@ func (self *DayFactory) addCommemorations(day *Day) {
 		var feastLevel, fast, fastException int
 
 		rows.Scan(&title, &subtitle, &feastName, &feastLevel, &saintNote, &saint, &fast, &fastException)
-		c := Commemoration{title, subtitle, feastName, saintNote, saint, feastLevel}
-		day.Commemorations = append(day.Commemorations, c)
 
-		if feastLevel > overallFeastLevel {
-			overallFeastLevel = feastLevel
-		}
-		if fast > overallFastLevel {
-			overallFastLevel = fast
-		}
-		if fastException > overallFastException {
-			overallFastException = fastException
-		}
+		// Add the non-blank commemorations to the list (the DB has some blank ones)
+		if len(title)+len(feastName)+len(saintNote)+len(saint) > 0 {
+			c := Commemoration{title, subtitle, feastName, saintNote, saint, feastLevel}
+			day.Commemorations = append(day.Commemorations, c)
 
-		day.FastLevel = FastLevels[overallFastLevel]
-		day.FastException = FastExceptions[overallFastException]
-		day.FeastLevel = overallFeastLevel
-		day.FeastLevelDesc = FeastLevels[overallFeastLevel]
+			if feastLevel > overallFeastLevel {
+				overallFeastLevel = feastLevel
+			}
+			if fast > overallFastLevel {
+				overallFastLevel = fast
+			}
+			if fastException > overallFastException {
+				overallFastException = fastException
+			}
+
+			day.FastLevel = FastLevels[overallFastLevel]
+			day.FastException = FastExceptions[overallFastException]
+			day.FeastLevel = overallFeastLevel
+			day.FeastLevelDesc = FeastLevels[overallFeastLevel]
+		}
 	}
 }
 
@@ -220,7 +224,7 @@ func (self *DayFactory) addReadings(day *Day, bible *Bible) {
 	}
 	defer rows.Close()
 
-	// TODO: Move Lenten Matins Gospels to the top
+	// Fetch all the readings
 	for rows.Next() {
 		var reading Reading
 		rows.Scan(&reading.Source, &reading.Description, &reading.Book, &reading.Display, &reading.ShortDisplay)
@@ -231,6 +235,19 @@ func (self *DayFactory) addReadings(day *Day, bible *Bible) {
 			}
 		}
 		day.Readings = append(day.Readings, reading)
+	}
+
+	// Move Lenten Matins Gospel to the top
+	if day.PDist > -42 && day.PDist < -7 && day.FeastLevel < 7 {
+		for i, reading := range day.Readings {
+			if reading.Source == "Matins Gospel" {
+				// Remove the matins gospel from the slice
+				x := append(day.Readings[:i], day.Readings[i+1:]...)
+				// prepend the matins gospel to the slice
+				day.Readings = append([]Reading{reading}, x...)
+				break
+			}
+		}
 	}
 }
 

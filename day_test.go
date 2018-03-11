@@ -2,7 +2,7 @@ package orthocal_test
 
 import (
 	"database/sql"
-	"encoding/json"
+	// "encoding/json"
 	_ "github.com/mattn/go-sqlite3"
 	"orthocal"
 	"strings"
@@ -24,9 +24,11 @@ func TestDay(t *testing.T) {
 	factory := orthocal.NewDayFactory(false, true, db)
 
 	// Sunday of the Publican and Pharisee
-	day := factory.NewDay(2018, 1, 28, bible)
-	actual, _ := json.MarshalIndent(day, "", "\t")
-	t.Errorf("%s", actual)
+	/*
+		day := factory.NewDay(2018, 1, 28, bible)
+		actual, _ := json.marshalindent(day, "", "\t")
+		t.errorf("%s", actual)
+	*/
 
 	t.Run("Annunciation", func(t *testing.T) {
 		day := factory.NewDay(2018, 3, 25, nil)
@@ -117,6 +119,26 @@ func TestDay(t *testing.T) {
 
 		if len(day.Readings) != 6 {
 			t.Errorf("3/9/2018 should have 6 readings but has %d.", len(day.Readings))
+		}
+
+		if day.Readings[0].Source != "Matins Gospel" {
+			t.Errorf("3/9/2018 should have matins gospel first but doesn't.")
+		}
+
+		set := make(map[string]bool)
+		for _, r := range day.Readings {
+			set[r.ShortDisplay] = true
+		}
+		if len(set) != 6 {
+			t.Errorf("3/9/2018 should not have duplicate readings.")
+		}
+	})
+
+	t.Run("Blank Commemorations", func(t *testing.T) {
+		day := factory.NewDay(2018, 2, 1, bible)
+
+		if len(day.Commemorations) != 1 {
+			t.Errorf("2/1/2018 should have 1 commemoration but has %d.", len(day.Commemorations))
 		}
 	})
 
