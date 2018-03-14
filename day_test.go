@@ -5,7 +5,6 @@ import (
 	// "encoding/json"
 	_ "github.com/mattn/go-sqlite3"
 	"orthocal"
-	"strings"
 	"testing"
 )
 
@@ -51,7 +50,7 @@ func TestDay(t *testing.T) {
 			t.Errorf("3/25/2018 should have a feast level of 7 but doesn't.")
 		}
 
-		if strings.Contains(day.FastLevel, "Fish") {
+		if day.FastLevel == 4 {
 			t.Errorf("3/25/2018 should be a fish day but isn't.")
 		}
 

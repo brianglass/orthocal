@@ -20,7 +20,8 @@ type Day struct {
 	FeastLevel     int       `json:"feast_level"`
 	FeastLevelDesc string    `json:"feast_level_description"`
 	Feasts         []string  `json:"feasts"`
-	FastLevel      string    `json:"fast_level"`
+	FastLevel      int       `json:"fast_level"`
+	FastLevelDesc  string    `json:"fast_level"`
 	FastException  string    `json:"fast_exception"`
 	Saints         []string  `json:"saints"`
 	ServiceNotes   []string  `json:"service_notes"`
@@ -151,7 +152,8 @@ func (self *DayFactory) addCommemorations(day *Day) {
 			overallFastException = fastException
 		}
 
-		day.FastLevel = FastLevels[overallFastLevel]
+		day.FastLevel = overallFastLevel
+		day.FastLevelDesc = FastLevels[overallFastLevel]
 		day.FastException = FastExceptions[overallFastException]
 		day.FeastLevel = overallFeastLevel
 		day.FeastLevelDesc = FeastLevels[overallFeastLevel]
