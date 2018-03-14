@@ -21,7 +21,7 @@ type Day struct {
 	FeastLevelDesc string    `json:"feast_level_description"`
 	Feasts         []string  `json:"feasts"`
 	FastLevel      int       `json:"fast_level"`
-	FastLevelDesc  string    `json:"fast_level"`
+	FastLevelDesc  string    `json:"fast_level_desc"`
 	FastException  string    `json:"fast_exception"`
 	Saints         []string  `json:"saints"`
 	ServiceNotes   []string  `json:"service_notes"`
