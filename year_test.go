@@ -1,7 +1,7 @@
 package orthocal_test
 
 import (
-	"orthocal"
+	"github.com/brianglass/orthocal"
 	"reflect"
 	"testing"
 )

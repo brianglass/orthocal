@@ -3,8 +3,8 @@ package orthocal_test
 import (
 	"database/sql"
 	// "encoding/json"
+	"github.com/brianglass/orthocal"
 	_ "github.com/mattn/go-sqlite3"
-	"orthocal"
 	"testing"
 )
 

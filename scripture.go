@@ -78,7 +78,7 @@ func (self *Bible) buildSQL(reference string) string {
 
 	sql := "select chapter, verse, content from bible\n"
 
-	for _, passage := range regexp.MustCompile(`\s*;\s*`).Split(reference, 4) {
+	for _, passage := range regexp.MustCompile(`\s*;\s*`).Split(reference, -1) {
 		// Get the book and specification
 		groups := refRe.FindStringSubmatch(passage)
 		book := strings.Replace(groups[1], " ", "", -1)
@@ -86,7 +86,7 @@ func (self *Bible) buildSQL(reference string) string {
 
 		// Create a conditional for each verse range in the specification
 		chapter := "1"
-		for _, verseRange := range regexp.MustCompile(`,\s*`).Split(specification, 4) {
+		for _, verseRange := range regexp.MustCompile(`,\s*`).Split(specification, -1) {
 			var conditional string
 
 			m := rangeRe.FindStringSubmatch(verseRange)
