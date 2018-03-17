@@ -32,14 +32,14 @@ var FastLevels = map[int]string{
 }
 
 var FastExceptions = map[int]string{
-	1:  "Wine & Oil Allowed",
-	2:  "Fish, Wine & Oil Allowed",
-	3:  "Wine & Oil Allowed",
-	4:  "Fish, Wine & Oil Allowed",
-	5:  "Wine Allowed",
-	6:  "Wine, Oil & Caviar Allowed",
+	1:  "Wine and Oil are Allowed",
+	2:  "Fish, Wine and Oil are Allowed",
+	3:  "Wine and Oil are Allowed",
+	4:  "Fish, Wine and Oil are Allowed",
+	5:  "Wine is Allowed",
+	6:  "Wine, Oil and Caviar are Allowed",
 	7:  "Meat Fast",
-	8:  "Strict Fast (Wine & Oil)",
+	8:  "Strict Fast (Wine and Oil)",
 	9:  "Strict Fast",
 	10: "No overrides",
 	11: "Fast Free",
