@@ -2,6 +2,7 @@ package orthocal
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"regexp"
@@ -9,6 +10,7 @@ import (
 )
 
 type Verse struct {
+	Book    string `json:"book"`
 	Chapter uint16 `json:"chapter"`
 	Verse   uint16 `json:"verse"`
 	Content string `json:"content"`
@@ -21,8 +23,10 @@ type Bible struct {
 }
 
 var (
-	refRe   = regexp.MustCompile(`([\w\s]+)\s+(\d.*)`)
-	rangeRe = regexp.MustCompile(`(?:(\d+)\.)?(\d+)(?:-(?:(\d+)\.)?(\d+))?`)
+	refRe   = regexp.MustCompile(`(?:([\w\s]+)\s+)?(\d.*)`)
+	rangeRe = regexp.MustCompile(`(?:(\d+)[\.:])?(\d+)(?:-(?:(\d+)[\.:])?(\d+))?`)
+
+	ReferenceParseError = errors.New("Error parsing scripture reference")
 )
 
 func NewBible(db *sql.DB) *Bible {
@@ -56,7 +60,12 @@ func NewBible(db *sql.DB) *Bible {
 func (self *Bible) Lookup(reference string) Passage {
 	var passage Passage
 
-	sql := self.buildSQL(reference)
+	sql, e := self.buildSQL(reference)
+	if e != nil {
+		log.Printf("Error building scripture lookup SQL '%s': %+v.", reference, e)
+		return passage
+	}
+
 	rows, e := self.db.Query(sql)
 	if e != nil {
 		log.Printf("Got error querying the database for scripture '%s': %#n.", reference, e)
@@ -66,22 +75,30 @@ func (self *Bible) Lookup(reference string) Passage {
 
 	for rows.Next() {
 		var verse Verse
-		rows.Scan(&verse.Chapter, &verse.Verse, &verse.Content)
+		rows.Scan(&verse.Book, &verse.Chapter, &verse.Verse, &verse.Content)
 		passage = append(passage, verse)
 	}
 
 	return passage
 }
 
-func (self *Bible) buildSQL(reference string) string {
+func (self *Bible) buildSQL(reference string) (string, error) {
 	var conditionals []string
 
-	sql := "select chapter, verse, content from bible\n"
+	sql := "select book, chapter, verse, content from bible\n"
 
+	book := ""
 	for _, passage := range regexp.MustCompile(`\s*;\s*`).Split(reference, -1) {
 		// Get the book and specification
 		groups := refRe.FindStringSubmatch(passage)
-		book := strings.Replace(groups[1], " ", "", -1)
+		if len(groups) < 3 {
+			return "", ReferenceParseError
+		}
+
+		// If the book is specified in this group, use it, else default to the previous one
+		if len(groups[1]) > 0 {
+			book = strings.Replace(groups[1], " ", "", -1)
+		}
 		specification := groups[2]
 
 		// Create a conditional for each verse range in the specification
@@ -90,6 +107,9 @@ func (self *Bible) buildSQL(reference string) string {
 			var conditional string
 
 			m := rangeRe.FindStringSubmatch(verseRange)
+			if len(m) < 5 {
+				return "", ReferenceParseError
+			}
 
 			defaultChapter := m[1]
 			if len(defaultChapter) == 0 {
@@ -129,5 +149,5 @@ func (self *Bible) buildSQL(reference string) string {
 		sql += "where " + conditionals[0] + "\n"
 	}
 
-	return sql
+	return sql, nil
 }
