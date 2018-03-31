@@ -9,6 +9,15 @@ import (
 	"strings"
 )
 
+// These books have a single chapter
+var chapterlessBooks = map[string]bool{
+	"Obad":  true,
+	"Phlm":  true,
+	"2John": true,
+	"3John": true,
+	"Jude":  true,
+}
+
 type Verse struct {
 	Book    string `json:"book"`
 	Chapter uint16 `json:"chapter"`
@@ -51,6 +60,7 @@ func NewBible(db *sql.DB) *Bible {
 	1 John 2.7-17
 	Jude 1-10
 	1 Cor 5.6-8; Gal 3.13-14
+	Prov 10, 3, 8
 
 	NOTE: this function directly interpolates values from the reference into
 	SQL. This is safe as long as the provided reference is coming from the
@@ -102,42 +112,56 @@ func (self *Bible) buildSQL(reference string) (string, error) {
 		specification := groups[2]
 
 		// Create a conditional for each verse range in the specification
-		chapter := "1"
+		var previousChapter string
 		for _, verseRange := range regexp.MustCompile(`,\s*`).Split(specification, -1) {
-			var conditional string
+			var conditional, chapter string
 
 			m := rangeRe.FindStringSubmatch(verseRange)
 			if len(m) < 5 {
 				return "", ReferenceParseError
 			}
 
-			defaultChapter := m[1]
-			if len(defaultChapter) == 0 {
-				// The chapter is implicit, so we use the chapter from the previous range
-				defaultChapter = chapter
+			if _, ok := chapterlessBooks[book]; ok {
+				// single-chapter books
+				chapter = "1"
+			} else {
+				// multi-chapter books
+				if len(m[1]) > 0 {
+					chapter = m[1]
+				} else {
+					// The chapter is implicit, so we use the chapter from the
+					// previous range if there is no chapter from the previous
+					// range, then this range is specifying a full chapter and
+					// the chapter number will be in m[2] and chapter will be
+					// the empty string.
+					chapter = previousChapter
+				}
 			}
 
 			if len(m[4]) > 0 {
 				if len(m[3]) > 0 && m[3] != m[1] {
 					// Handle ranges that span chapters
-					conditional = fmt.Sprintf(`(book = "%s" and ((chapter = %s and verse >= %s) or (chapter = %s and verse <= %s)))`, book, defaultChapter, m[2], m[3], m[4])
+					conditional = fmt.Sprintf(`(book = "%s" and ((chapter = %s and verse >= %s) or (chapter = %s and verse <= %s)))`, book, chapter, m[2], m[3], m[4])
 				} else {
 					// Handle ranges that are contained within a single chapter
-					conditional = fmt.Sprintf(`(book = "%s" and chapter = %s and verse between %s and %s)`, book, defaultChapter, m[2], m[4])
+					conditional = fmt.Sprintf(`(book = "%s" and chapter = %s and verse between %s and %s)`, book, chapter, m[2], m[4])
 				}
-			} else {
+			} else if len(chapter) > 0 {
 				// Handle a single verse
-				conditional = fmt.Sprintf(`(book = "%s" and chapter = "%s" and verse = "%s")`, book, defaultChapter, m[2])
+				conditional = fmt.Sprintf(`(book = "%s" and chapter = "%s" and verse = "%s")`, book, chapter, m[2])
+			} else {
+				// Here we handle full chapters
+				conditional = fmt.Sprintf(`(book = "%s" and chapter = "%s")`, book, m[2])
 			}
 
 			conditionals = append(conditionals, conditional)
 
-			// Remember the most recently used chapter
-			if len(m[3]) > 0 || len(m[1]) > 0 {
-				chapter = m[3]
-				if len(chapter) == 0 {
-					chapter = m[1]
-				}
+			// Remember the most recently used chapter, unless it was a full chapter
+			// If it was a full chapter, it can't be reused in a subsequent range.
+			if len(m[3]) > 0 {
+				previousChapter = m[3]
+			} else if len(m[1]) > 0 {
+				previousChapter = m[1]
 			}
 		}
 	}
