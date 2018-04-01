@@ -32,6 +32,7 @@ func TestScriptureLookup(t *testing.T) {
 		{"1 Cor 5.6-8; Gal 3.13-14", 5},
 		{"Matt 26:2-20; John 13:3-17; Matt 26:21-39; Luke 22:43-45; Matt 26:40-27:2", 94},
 		{"Prov 10, 3, 8", 32 + 35 + 36},
+		{"4 Kgs 2.6-14", 9},
 	}
 
 	for _, tc := range testCases {

@@ -107,7 +107,7 @@ func (self *Bible) buildSQL(reference string) (string, error) {
 
 		// If the book is specified in this group, use it, else default to the previous one
 		if len(groups[1]) > 0 {
-			book = strings.Replace(groups[1], " ", "", -1)
+			book = NormalizeBookName(groups[1])
 		}
 		specification := groups[2]
 
@@ -130,7 +130,7 @@ func (self *Bible) buildSQL(reference string) (string, error) {
 					chapter = m[1]
 				} else {
 					// The chapter is implicit, so we use the chapter from the
-					// previous range if there is no chapter from the previous
+					// previous range. If there is no chapter from the previous
 					// range, then this range is specifying a full chapter and
 					// the chapter number will be in m[2] and chapter will be
 					// the empty string.
