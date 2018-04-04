@@ -1,6 +1,7 @@
 package orthocal
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -68,6 +69,10 @@ func NewBible(db *sql.DB) *Bible {
 	user-provided references.
 */
 func (self *Bible) Lookup(reference string) Passage {
+	return self.LookupWithContext(context.Background(), reference)
+}
+
+func (self *Bible) LookupWithContext(ctx context.Context, reference string) Passage {
 	var passage Passage
 
 	sql, e := self.buildSQL(reference)
@@ -76,7 +81,7 @@ func (self *Bible) Lookup(reference string) Passage {
 		return passage
 	}
 
-	rows, e := self.db.Query(sql)
+	rows, e := self.db.QueryContext(ctx, sql)
 	if e != nil {
 		log.Printf("Got error querying the database for scripture '%s': %#n.", reference, e)
 		return passage

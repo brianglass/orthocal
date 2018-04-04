@@ -1,6 +1,7 @@
 package orthocal
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -61,6 +62,10 @@ func NewDayFactory(useJulian bool, doJump bool, db *sql.DB) *DayFactory {
 }
 
 func (self *DayFactory) NewDay(year, month, day int, bible *Bible) *Day {
+	return self.NewDayWithContext(context.Background(), year, month, day, bible)
+}
+
+func (self *DayFactory) NewDayWithContext(ctx context.Context, year, month, day int, bible *Bible) *Day {
 	var d Day
 
 	// time.Date automatically wraps dates that are invalid to the next month.
@@ -85,26 +90,26 @@ func (self *DayFactory) NewDay(year, month, day int, bible *Bible) *Day {
 		self.years.Store(pyear, d.pyear)
 	}
 
-	self.addCommemorations(&d)
-	self.addReadings(&d, bible)
+	self.addCommemorations(ctx, &d)
+	self.addReadings(ctx, &d, bible)
 
 	return &d
 }
 
-func (self *DayFactory) addCommemorations(day *Day) {
+func (self *DayFactory) addCommemorations(ctx context.Context, day *Day) {
 	var rows *sql.Rows
 	var e error
 
 	floatIndex := day.pyear.LookupFloatIndex(day.PDist)
 
 	if floatIndex != 0 && floatIndex != 499 {
-		rows, e = self.db.Query(
+		rows, e = self.db.QueryContext(ctx,
 			`select title, subtitle, feast_name, feast_level, service_note, saint, fast, fast_exception
 			from days
 			where pdist = $1 or pdist = $2
 			or (month = $3 and day = $4)`, day.PDist, floatIndex, day.Month, day.Day)
 	} else {
-		rows, e = self.db.Query(
+		rows, e = self.db.QueryContext(ctx,
 			`select title, subtitle, feast_name, feast_level, service_note, saint, fast, fast_exception
 			from days
 			where pdist = $1
@@ -160,7 +165,7 @@ func (self *DayFactory) addCommemorations(day *Day) {
 	}
 }
 
-func (self *DayFactory) addReadings(day *Day, bible *Bible) {
+func (self *DayFactory) addReadings(ctx context.Context, day *Day, bible *Bible) {
 	var conditionals []string
 
 	ePDist, gPDist := self.getAdjustedPDists(day)
@@ -223,7 +228,7 @@ func (self *DayFactory) addReadings(day *Day, bible *Bible) {
 
 	query = fmt.Sprintf(query, gPDist, departed, ePDist, departed, day.PDist, strings.Join(conditionals, " "))
 
-	rows, e := self.db.Query(query)
+	rows, e := self.db.QueryContext(ctx, query)
 	if e != nil {
 		log.Printf("Got error querying the database: %#n.", e)
 		return
