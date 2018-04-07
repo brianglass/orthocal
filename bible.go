@@ -146,10 +146,17 @@ func (self *Bible) buildSQL(reference string) (string, error) {
 			if len(m[4]) > 0 {
 				if len(m[3]) > 0 && m[3] != m[1] {
 					// Handle ranges that span chapters
-					conditional = fmt.Sprintf(`(book = "%s" and ((chapter = %s and verse >= %s) or (chapter = %s and verse <= %s)))`, book, chapter, m[2], m[3], m[4])
+					conditional = fmt.Sprintf(`
+						(book = "%s"
+						 and ((chapter = %s and verse >= %s) or
+						      (chapter > %s and chapter < %s) or
+						      (chapter = %s and verse <= %s)))`, book, chapter, m[2], chapter, m[3], m[3], m[4])
 				} else {
 					// Handle ranges that are contained within a single chapter
-					conditional = fmt.Sprintf(`(book = "%s" and chapter = %s and verse between %s and %s)`, book, chapter, m[2], m[4])
+					conditional = fmt.Sprintf(`
+					    (book = "%s" and
+						 chapter = %s and
+						 verse between %s and %s)`, book, chapter, m[2], m[4])
 				}
 			} else if len(chapter) > 0 {
 				// Handle a single verse

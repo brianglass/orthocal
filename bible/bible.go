@@ -36,6 +36,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	_, e = db.Exec(`CREATE INDEX bible_book_chapter ON bible(book, chapter)`)
+	if e != nil {
+		log.Printf("Got error creating index: %+v.", e)
+		os.Exit(1)
+	}
+
 	c := make(chan Passage, 1)
 	go Parse(xmlFile, c)
 	for passage := range c {
