@@ -36,13 +36,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	_, e = db.Exec(`CREATE INDEX bible_book_chapter ON bible(book, chapter)`)
-	if e != nil {
-		log.Printf("Got error creating index: %+v.", e)
-		os.Exit(1)
-	}
-
-	c := make(chan Passage, 1)
+	c := make(chan Passage)
 	go Parse(xmlFile, c)
 	for passage := range c {
 		_, e = db.Exec(`INSERT INTO bible VALUES (?, ?, ?, ?)`, passage.book, passage.chapter, passage.verse, passage.content)
@@ -50,6 +44,13 @@ func main() {
 			log.Printf("Got error inserting row: %+v.", e)
 			os.Exit(1)
 		}
+	}
+
+	// Inserts are slightly faster if we do this after the table is built
+	_, e = db.Exec(`CREATE INDEX bible_book_chapter ON bible(book, chapter)`)
+	if e != nil {
+		log.Printf("Got error creating index: %+v.", e)
+		os.Exit(1)
 	}
 }
 
@@ -63,11 +64,10 @@ func Parse(reader io.Reader, c chan Passage) {
 	for {
 		token, e := decoder.Token()
 
-		if e == io.EOF {
-			close(c)
-			return
-		} else if e != nil {
-			log.Printf("Error parsing usfx file: %+v", e)
+		if e != nil {
+			if e != io.EOF {
+				log.Printf("Error parsing usfx file: %+v", e)
+			}
 			close(c)
 			return
 		}

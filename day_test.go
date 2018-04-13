@@ -133,6 +133,20 @@ func TestDay(t *testing.T) {
 		}
 	})
 
+	t.Run("Tone", func(t *testing.T) {
+		day := factory.NewDay(2018, 4, 12, nil)
+
+		if day.Tone != 0 {
+			t.Errorf("4/12/2018 should have no tone but does.")
+		}
+
+		day = factory.NewDay(2018, 4, 17, nil)
+
+		if day.Tone != 1 {
+			t.Errorf("4/12/2018 should have tone 1 but has tone %d.", day.Tone)
+		}
+	})
+
 	/*
 		today := time.Now()
 		for {

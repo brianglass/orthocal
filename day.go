@@ -17,6 +17,7 @@ type Day struct {
 	Month          int       `json:"month"`
 	Day            int       `json:"day"`
 	Weekday        int       `json:"weekday"`
+	Tone           int       `json:"tone"`
 	Titles         []string  `json:"titles"`
 	FeastLevel     int       `json:"feast_level"`
 	FeastLevelDesc string    `json:"feast_level_description"`
@@ -92,6 +93,7 @@ func (self *DayFactory) NewDayWithContext(ctx context.Context, year, month, day 
 
 	self.addCommemorations(ctx, &d)
 	self.addReadings(ctx, &d, bible)
+	self.addTone(&d)
 
 	return &d
 }
@@ -282,6 +284,25 @@ func (self *DayFactory) matinsGospel(day *Day) (bool, int) {
 	}
 
 	return true, 0
+}
+
+func (self *DayFactory) addTone(day *Day) {
+	if -9 < day.PDist && day.PDist < 7 {
+		// The days surrounding Pascha are exceptions
+		day.Tone = 0
+	} else {
+		pbase := day.PDist
+		if pbase < 0 {
+			pbase = day.JDN - day.pyear.PreviousPascha
+		}
+
+		x := pbase % 56
+		if x == 0 {
+			x = 56
+		}
+
+		day.Tone = x / 7
+	}
 }
 
 func (self *DayFactory) getAdjustedPDists(day *Day) (int, int) {
