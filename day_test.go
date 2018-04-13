@@ -145,6 +145,12 @@ func TestDay(t *testing.T) {
 		if day.Tone != 1 {
 			t.Errorf("4/12/2018 should have tone 1 but has tone %d.", day.Tone)
 		}
+
+		day = factory.NewDay(2018, 2, 6, nil)
+
+		if day.Tone != 2 {
+			t.Errorf("4/12/2018 should have tone 2 but has tone %d.", day.Tone)
+		}
 	})
 
 	/*
