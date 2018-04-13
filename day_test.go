@@ -134,22 +134,23 @@ func TestDay(t *testing.T) {
 	})
 
 	t.Run("Tone", func(t *testing.T) {
-		day := factory.NewDay(2018, 4, 12, nil)
-
-		if day.Tone != 0 {
-			t.Errorf("4/12/2018 should have no tone but does.")
+		testCases := []struct {
+			day  *orthocal.Day
+			tone int
+		}{
+			{factory.NewDay(2018, 4, 12, nil), 0},
+			{factory.NewDay(2018, 4, 17, nil), 1},
+			{factory.NewDay(2018, 2, 6, nil), 2},
+			{factory.NewDay(2019, 1, 23, nil), 1},
+			{factory.NewDay(2019, 6, 21, nil), 7},
 		}
 
-		day = factory.NewDay(2018, 4, 17, nil)
-
-		if day.Tone != 1 {
-			t.Errorf("4/12/2018 should have tone 1 but has tone %d.", day.Tone)
-		}
-
-		day = factory.NewDay(2018, 2, 6, nil)
-
-		if day.Tone != 2 {
-			t.Errorf("4/12/2018 should have tone 2 but has tone %d.", day.Tone)
+		for _, tc := range testCases {
+			t.Run("Tone", func(t *testing.T) {
+				if tc.day.Tone != tc.tone {
+					t.Errorf("%d/%d/%d should have tone %d but has tone %d.", tc.day.Month, tc.day.Day, tc.day.Year, tc.tone, tc.day.Tone)
+				}
+			})
 		}
 	})
 
