@@ -68,17 +68,24 @@ func (self *DayFactory) NewDay(year, month, day int, bible *Bible) *Day {
 
 func (self *DayFactory) NewDayWithContext(ctx context.Context, year, month, day int, bible *Bible) *Day {
 	var d Day
+	var pdist, pyear int
+	var date time.Time
 
 	// time.Date automatically wraps dates that are invalid to the next month.
 	// e.g. April 31 -> May 1
-	date := time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.Local)
+	if self.useJulian {
+		date, _ = GregorianToJulian(year, month, day)
+	} else {
+		date = time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.Local)
+	}
 	d.Year, d.Month, d.Day = date.Year(), int(date.Month()), date.Day()
 
-	pdist, pyear := ComputePaschaDistance(year, month, day)
 	if self.useJulian {
-		d.JDN = JulianDateToJDN(year, month, day)
+		pdist, pyear = ComputeJulianPaschaDistance(d.Year, d.Month, d.Day)
+		d.JDN = JulianDateToJDN(d.Year, d.Month, d.Day)
 	} else {
-		d.JDN = GregorianDateToJDN(year, month, day)
+		pdist, pyear = ComputePaschaDistance(d.Year, d.Month, d.Day)
+		d.JDN = GregorianDateToJDN(d.Year, d.Month, d.Day)
 	}
 	d.PDist = pdist
 	d.Weekday = WeekDayFromPDist(d.PDist)
@@ -305,13 +312,12 @@ func (self *DayFactory) addTone(day *Day) {
 	}
 }
 
-func (self *DayFactory) getAdjustedPDists(day *Day) (int, int) {
-	var gPDist, ePDist int
+func (self *DayFactory) getAdjustedPDists(day *Day) (ePDist, gPDist int) {
 	var jump int
 
 	// Compute the Lucan jump
 	_, _, _, sunAfter := SurroundingWeekends(day.pyear.Elevation)
-	if day.PDist > sunAfter && self.doJump {
+	if self.doJump && day.PDist > sunAfter {
 		jump = day.pyear.LucanJump
 	}
 

@@ -107,14 +107,34 @@ func ComputePaschaDistance(year, month, day int) (int, int) {
 	return distance, year
 }
 
+// Compute the distance of a given day from Pascha. Returns the distance and the year.
+// If the distance is < -77, the returned year will be earlier than the one passed in.
+func ComputeJulianPaschaDistance(year, month, day int) (int, int) {
+	JDN := JulianDateToJDN(year, month, day)
+	distance := JDN - ComputePaschaJDN(year)
+
+	if distance < -77 {
+		year--
+		distance = JDN - ComputePaschaJDN(year)
+	}
+
+	return distance, year
+}
+
 // Return the day of the week given the distance from Pascha.
 func WeekDayFromPDist(distance int) int {
 	return (7 + distance%7) % 7
 }
 
 func SurroundingWeekends(distance int) (int, int, int, int) {
-	saturdayBefore := distance - WeekDayFromPDist(distance) - 1
-	return saturdayBefore, saturdayBefore + 1, saturdayBefore + 7, saturdayBefore + 8
+	weekday := WeekDayFromPDist(distance)
+
+	saturdayBefore := distance - weekday - 1
+	sundayBefore := distance - 7 + ((7 - weekday) % 7)
+	saturdayAfter := distance + 7 - ((weekday + 1) % 7)
+	sundayAfter := distance + 7 - weekday
+
+	return saturdayBefore, sundayBefore, saturdayAfter, sundayAfter
 }
 
 // Conversion functions
@@ -137,6 +157,26 @@ func JulianToGregorian(year, month, day int) (time.Time, error) {
 	// Add an offset of 13 to convert from Julian to Gregorian
 	julianDate := time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.Local)
 	return julianDate.AddDate(0, 0, 13), nil
+}
+
+// Convert a Gregorian date to a Julian date.
+func GregorianToJulian(year, month, day int) (time.Time, error) {
+	// This function will be incorrect outside the range 2001-2099 for 2 reasons:
+	//
+	// 1. The offset of 13 is incorrect outside the range 1900-2099.
+	// 2. If the Julian date is in February and on a year that is divisible by
+	//    100, the Go time module will incorrectly add the offset because these years
+	//    are leap years on the Julian, but not on the Gregorian.
+	//
+	// Hopefully this code will no longer be running by 2100.
+
+	if year < 2001 || year > 2099 {
+		return time.Now(), errors.New("The year must be between 1900 and 2099")
+	}
+
+	// Add an offset of 13 to convert from Julian to Gregorian
+	gregorianDate := time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.Local)
+	return gregorianDate.AddDate(0, 0, -13), nil
 }
 
 // Convert a Julian date to a Julian day number.
