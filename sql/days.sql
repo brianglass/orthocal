@@ -563,7 +563,7 @@ insert into days values(999, 4, 17, '', '', '', 3, 0, '', 'Ven. Zosima of Solove
 insert into days values(999, 4, 18, '', '', '', 0, 0, '', 'Ven. John, Disciple of Gregory Decapolites', 0, 0, 0);
 insert into days values(999, 4, 19, '', '', '', 0, 0, '', 'Ven. John of Ancient Caves in Palestine', 0, 0, 0);
 insert into days values(999, 4, 20, '', '', '', 0, 0, '', 'Ven. Theodore Trichinas', 0, 0, 0);
-insert into days values(999, 4, 21, '', '', '', 0, 0, '', 'Hieromartyr Januarius and Companionsw', 0, 0, 0);
+insert into days values(999, 4, 21, '', '', '', 0, 0, '', 'Hieromartyr Januarius and Companions', 0, 0, 0);
 insert into days values(999, 4, 22, '', '', '', 0, 0, '', 'St Theodore the Sykeote', 0, 0, 0);
 insert into days values(999, 4, 23, '', '', 'Holy Greatmartyr, Victorybearer and Wonderworker George', 5, 0, '', '', 0, 1, 0);
 insert into days values(999, 4, 24, '', '', '', 0, 0, '', 'Martyr Sabbas Stratelates', 0, 0, 0);
