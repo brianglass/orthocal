@@ -154,6 +154,31 @@ func TestDay(t *testing.T) {
 		}
 	})
 
+	t.Run("Pentecost", func(t *testing.T) {
+		testCases := []struct {
+			day       *orthocal.Day
+			fast      int
+			exception int
+		}{
+			{factory.NewDay(2018, 6, 3, nil), 0, 0},
+			{factory.NewDay(2018, 6, 4, nil), 3, 0},
+			{factory.NewDay(2018, 6, 28, nil), 3, 1},
+			{factory.NewDay(2018, 6, 29, nil), 1, 2},
+			{factory.NewDay(2018, 6, 30, nil), 0, 0},
+		}
+
+		for _, tc := range testCases {
+			t.Run("Tone", func(t *testing.T) {
+				if tc.day.FastLevel != tc.fast {
+					t.Errorf("%d/%d/%d should have fast level %d but has %d.", tc.day.Month, tc.day.Day, tc.day.Year, tc.fast, tc.day.FastLevel)
+				}
+				if tc.day.FastException != tc.exception {
+					t.Errorf("%d/%d/%d should have fast exception %d but has %d.", tc.day.Month, tc.day.Day, tc.day.Year, tc.exception, tc.day.FastException)
+				}
+			})
+		}
+	})
+
 	/*
 		today := time.Now()
 		for {

@@ -11,23 +11,24 @@ import (
 )
 
 type Day struct {
-	PDist          int       `json:"pascha_distance"`
-	JDN            int       `json:"julian_day_number"`
-	Year           int       `json:"year"`
-	Month          int       `json:"month"`
-	Day            int       `json:"day"`
-	Weekday        int       `json:"weekday"`
-	Tone           int       `json:"tone"`
-	Titles         []string  `json:"titles"`
-	FeastLevel     int       `json:"feast_level"`
-	FeastLevelDesc string    `json:"feast_level_description"`
-	Feasts         []string  `json:"feasts"`
-	FastLevel      int       `json:"fast_level"`
-	FastLevelDesc  string    `json:"fast_level_desc"`
-	FastException  string    `json:"fast_exception"`
-	Saints         []string  `json:"saints"`
-	ServiceNotes   []string  `json:"service_notes"`
-	Readings       []Reading `json:"readings"`
+	PDist             int       `json:"pascha_distance"`
+	JDN               int       `json:"julian_day_number"`
+	Year              int       `json:"year"`
+	Month             int       `json:"month"`
+	Day               int       `json:"day"`
+	Weekday           int       `json:"weekday"`
+	Tone              int       `json:"tone"`
+	Titles            []string  `json:"titles"`
+	FeastLevel        int       `json:"feast_level"`
+	FeastLevelDesc    string    `json:"feast_level_description"`
+	Feasts            []string  `json:"feasts"`
+	FastLevel         int       `json:"fast_level"`
+	FastLevelDesc     string    `json:"fast_level_desc"`
+	FastException     int       `json:"fast_exception"`
+	FastExceptionDesc string    `json:"fast_exception_desc"`
+	Saints            []string  `json:"saints"`
+	ServiceNotes      []string  `json:"service_notes"`
+	Readings          []Reading `json:"readings"`
 
 	pyear *Year
 }
@@ -101,6 +102,7 @@ func (self *DayFactory) NewDayWithContext(ctx context.Context, year, month, day 
 	self.addCommemorations(ctx, &d)
 	self.addReadings(ctx, &d, bible)
 	self.addTone(&d)
+	self.addFastingAdjustments(&d)
 
 	return &d
 }
@@ -168,7 +170,8 @@ func (self *DayFactory) addCommemorations(ctx context.Context, day *Day) {
 
 		day.FastLevel = overallFastLevel
 		day.FastLevelDesc = FastLevels[overallFastLevel]
-		day.FastException = FastExceptions[overallFastException]
+		day.FastException = overallFastException
+		day.FastExceptionDesc = FastExceptions[overallFastException]
 		day.FeastLevel = overallFeastLevel
 		day.FeastLevelDesc = FeastLevels[overallFeastLevel]
 	}
@@ -356,4 +359,60 @@ func (self *DayFactory) getAdjustedPDists(day *Day) (ePDist, gPDist int) {
 	}
 
 	return ePDist, gPDist
+}
+
+func (self *DayFactory) addFastingAdjustments(day *Day) {
+	// Fast free day
+	if day.FastException == 11 {
+		day.FastLevel = 0
+		return
+	}
+
+	// Are we in the Apostles fast?
+	if day.PDist > 56 && day.PDist < day.pyear.PeterAndPaul {
+		day.FastLevel = 3
+		if day.PDist == 57 {
+			day.ServiceNotes = append([]string{"Beginning of Apostles' Fast"}, day.ServiceNotes...)
+		}
+	}
+
+	switch day.FastLevel {
+	case 2:
+		// remove fish for minor feasts during Lent
+		if day.FastException == 2 {
+			day.FastException--
+		}
+	case 4:
+		// Allow wine and oil on weekends during Dormition
+		if (day.Weekday == Sunday || day.Weekday == Saturday) && day.FastException == 0 {
+			day.FastException++
+		}
+	case 3, 5:
+		// Apostles & Nativity
+		switch day.Weekday {
+		case Tuesday, Thursday:
+			if day.FastException == 0 {
+				day.FastException++
+			}
+		case Wednesday, Friday:
+			if day.FeastLevel < 4 && day.FastException > 1 {
+				day.FastException = 1
+			}
+		case Sunday, Saturday:
+			day.FastException = 2
+		}
+
+		// Ease the restrictions during the week before Nativity
+		if day.PDist > day.pyear.Nativity-6 && day.PDist < day.pyear.Nativity-1 && day.FastException > 1 {
+			day.FastException = 1
+		}
+	}
+
+	// The days before Nativity and Theophany are Wine & Oil days
+	if (day.PDist == day.pyear.Nativity-1 || day.PDist == day.pyear.Theophany-1) && (day.Weekday == Sunday || day.Weekday == Saturday) {
+		day.FastException = 1
+	}
+
+	day.FastLevelDesc = FastLevels[day.FastLevel]
+	day.FastExceptionDesc = FastExceptions[day.FastException]
 }
