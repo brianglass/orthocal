@@ -154,7 +154,7 @@ func TestDay(t *testing.T) {
 		}
 	})
 
-	t.Run("Pentecost", func(t *testing.T) {
+	t.Run("Apostles Fast", func(t *testing.T) {
 		testCases := []struct {
 			day       *orthocal.Day
 			fast      int
@@ -162,6 +162,10 @@ func TestDay(t *testing.T) {
 		}{
 			{factory.NewDay(2018, 6, 3, nil), 0, 0},
 			{factory.NewDay(2018, 6, 4, nil), 3, 0},
+			{factory.NewDay(2018, 6, 12, nil), 3, 1},
+			{factory.NewDay(2018, 6, 14, nil), 3, 1},
+			{factory.NewDay(2018, 6, 16, nil), 3, 2},
+			{factory.NewDay(2018, 6, 17, nil), 3, 2},
 			{factory.NewDay(2018, 6, 28, nil), 3, 1},
 			{factory.NewDay(2018, 6, 29, nil), 1, 2},
 			{factory.NewDay(2018, 6, 30, nil), 0, 0},

@@ -103,7 +103,8 @@ func Parse(reader io.Reader, c chan Passage) {
 				text := strings.TrimSpace(string(element))
 				text = strings.Replace(text, "¶", "", -1)
 				first, _ := utf8.DecodeRuneInString(text)
-				if first == '.' || first == ',' || first == '?' || first == '!' || first == ':' || first == ';' {
+				last, _ := utf8.DecodeLastRuneInString(content)
+				if first == '.' || first == ',' || first == '?' || first == '!' || first == ':' || first == ';' || last == '(' {
 					content += text
 				} else {
 					content += " " + text
