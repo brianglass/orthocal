@@ -365,6 +365,7 @@ func (self *DayFactory) addFastingAdjustments(day *Day) {
 	// Fast free day
 	if day.FastException == 11 {
 		day.FastLevel = 0
+		day.FastLevelDesc = FastLevels[day.FastLevel]
 		return
 	}
 

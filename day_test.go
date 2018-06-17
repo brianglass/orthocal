@@ -6,6 +6,7 @@ import (
 	"github.com/brianglass/orthocal"
 	_ "github.com/mattn/go-sqlite3"
 	"testing"
+	// "time"
 )
 
 func TestDay(t *testing.T) {
@@ -183,13 +184,38 @@ func TestDay(t *testing.T) {
 		}
 	})
 
+	t.Run("Fast Free", func(t *testing.T) {
+		testCases := []struct {
+			day  *orthocal.Day
+			fast int
+			desc string
+		}{
+			{factory.NewDay(2018, 12, 26, nil), 0, "No Fast"},
+			{factory.NewDay(2018, 12, 28, nil), 0, "No Fast"},
+			{factory.NewDay(2019, 1, 2, nil), 0, "No Fast"},
+			{factory.NewDay(2019, 1, 4, nil), 0, "No Fast"},
+		}
+
+		for _, tc := range testCases {
+			t.Run("Tone", func(t *testing.T) {
+				if tc.day.FastLevel != tc.fast {
+					t.Errorf("%d/%d/%d should have fast level %d but has %d.", tc.day.Month, tc.day.Day, tc.day.Year, tc.fast, tc.day.FastLevel)
+				}
+				if tc.day.FastLevelDesc != tc.desc {
+					t.Errorf("%d/%d/%d should have fast description \"%s\" but has \"%s\".", tc.day.Month, tc.day.Day, tc.day.Year, tc.desc, tc.day.FastLevelDesc)
+				}
+			})
+		}
+	})
+
 	/*
-		today := time.Now()
+		// today := time.Now()
+		today := time.Date(2019, 1, 2, 0, 0, 0, 0, time.UTC)
 		for {
 			today = today.AddDate(0, 0, 1)
-			day = factory.NewDay(today.Year(), int(today.Month()), today.Day(), nil)
-			if day.HasNoMemorial() {
-				actual, _ = json.MarshalIndent(day, "", "\t")
+			day := factory.NewDay(today.Year(), int(today.Month()), today.Day(), nil)
+			if day.FastException == 11 && day.FastLevel != 0 {
+				actual, _ := json.MarshalIndent(day, "", "\t")
 				t.Errorf("%s", actual)
 				break
 			}
