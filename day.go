@@ -167,14 +167,14 @@ func (self *DayFactory) addCommemorations(ctx context.Context, day *Day) {
 		if fastException > overallFastException {
 			overallFastException = fastException
 		}
-
-		day.FastLevel = overallFastLevel
-		day.FastLevelDesc = FastLevels[overallFastLevel]
-		day.FastException = overallFastException
-		day.FastExceptionDesc = FastExceptions[overallFastException]
-		day.FeastLevel = overallFeastLevel
-		day.FeastLevelDesc = FeastLevels[overallFeastLevel]
 	}
+
+	day.FastLevel = overallFastLevel
+	day.FastLevelDesc = FastLevels[overallFastLevel]
+	day.FastException = overallFastException
+	day.FastExceptionDesc = FastExceptions[overallFastException]
+	day.FeastLevel = overallFeastLevel
+	day.FeastLevelDesc = FeastLevels[overallFeastLevel]
 }
 
 func (self *DayFactory) addReadings(ctx context.Context, day *Day, bible *Bible) {
@@ -364,7 +364,7 @@ func (self *DayFactory) getAdjustedPDists(day *Day) (ePDist, gPDist int) {
 func (self *DayFactory) addFastingAdjustments(day *Day) {
 	// Fast free day
 	if day.FastException == 11 {
-		day.FastLevel = 0
+		day.FastLevel = NoFast
 		day.FastLevelDesc = FastLevels[day.FastLevel]
 		return
 	}
@@ -378,17 +378,17 @@ func (self *DayFactory) addFastingAdjustments(day *Day) {
 	}
 
 	switch day.FastLevel {
-	case 2:
+	case LentenFast:
 		// remove fish for minor feasts during Lent
 		if day.FastException == 2 {
 			day.FastException--
 		}
-	case 4:
+	case DormitionFast:
 		// Allow wine and oil on weekends during Dormition
 		if (day.Weekday == Sunday || day.Weekday == Saturday) && day.FastException == 0 {
 			day.FastException++
 		}
-	case 3, 5:
+	case ApostlesFast, NativityFast:
 		// Apostles & Nativity
 		switch day.Weekday {
 		case Tuesday, Thursday:

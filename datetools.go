@@ -22,13 +22,22 @@ const (
 	Saturday
 )
 
+const (
+	NoFast = iota
+	Fast
+	LentenFast
+	ApostlesFast
+	DormitionFast
+	NativityFast
+)
+
 var FastLevels = map[int]string{
-	0: "No Fast",
-	1: "Fast",
-	2: "Lenten Fast",
-	3: "Apostles Fast",
-	4: "Dormition Fast",
-	5: "Nativity Fast",
+	NoFast:        "No Fast",
+	Fast:          "Fast",
+	LentenFast:    "Lenten Fast",
+	ApostlesFast:  "Apostles Fast",
+	DormitionFast: "Dormition Fast",
+	NativityFast:  "Nativity Fast",
 }
 
 var FastExceptions = map[int]string{
