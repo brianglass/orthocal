@@ -97,7 +97,7 @@ insert into pericopes values('74', 'Matthew', 'Matthew 18.1-11', 'Matt 18.1-11',
 insert into pericopes values('75', 'Matthew', 'Matthew 18.10-20', 'Matt 18.10-20', 'Monday of Holy Spirit', '', 'The Lord said: ', '', 'Matt_18010_18020', '', 0);
 insert into pericopes values('76', 'Matthew', 'Matthew 18.18-22, 19.1-2, 13-15', 'Matt 18.18-22, 19.1-2, 13-15', 'Tuesday of 9th Sunday', '', 'The Lord said to His disciples, Amen', '', 'Matt_18018_18022|Matt_19001_19002|Matt_19013_19015', '', 0);
 insert into pericopes values('77', 'Matthew', 'Matthew 18.23-35', 'Matt 18.23-35', '11th Sunday', '', 'The Lord said this parable:', '', 'Matt_18023_18035', '', 0);
-insert into pericopes values('78', 'Matthew', 'Matthew 19.3-12', 'Mattw 19.3-12', 'Saturday of 11th Sunday', '', 'At that time, the Pharisees also came to Jesus,', '', 'Matt_19003_19012', '', 0);
+insert into pericopes values('78', 'Matthew', 'Matthew 19.3-12', 'Matt 19.3-12', 'Saturday of 11th Sunday', '', 'At that time, the Pharisees also came to Jesus,', '', 'Matt_19003_19012', '', 0);
 insert into pericopes values('79', 'Matthew', 'Matthew 19.16-26', 'Matt 19.16-26', '12th Sunday', '', 'At that time, a young man came and said to Jesus,', '', 'Matt_19016_19026', '', 0);
 insert into pericopes values('80', 'Matthew', 'Matthew 20.1-16', 'Matt 20.1-16', 'Wednesday of 9th Sunday', '', 'The Lord said this parable:', '', 'Matt_20001_20016', '', 0);
 insert into pericopes values('81', 'Matthew', 'Matthew 20.17-28', 'Matt 20.17-28', 'Thursday of 9th Sunday', '', 'At that time,', '', 'Matt_20017_20028', '', 0);
