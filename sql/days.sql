@@ -832,9 +832,9 @@ insert into days values(1011, 0, 0, '', '', 'Saturday before Nativity', 0, 0, ''
 insert into days values(1012, 0, 0, '', '', 'Sunday before Nativity', 0, 0, '', '', 0, 0, 0);
 insert into days values(1013, 0, 0, '', '', 'Royal Hours of Nativity', 0, 0, '', '', 0, 0, 0);
 insert into days values(1014, 0, 0, '', '', 'Eve of Nativity', 0, 0, '', '', 0, 0, 0);
-insert into days values(1015, 0, 0, '', '', 'Saturday before Nativity &ndash; Eve of Nativity', 0, 0, '', '', 0, 0, 0);
-insert into days values(1016, 0, 0, '', '', 'Sunday before Nativity &ndash; Eve of Nativity', 0, 0, '', '', 0, 0, 0);
-insert into days values(1017, 0, 0, '', '', 'Saturday after Nativity &ndash; Saturday before Theophany', 0, 0, '', '', 0, 0, 0);
+insert into days values(1015, 0, 0, '', '', 'Saturday before Nativity – Eve of Nativity', 0, 0, '', '', 0, 0, 0);
+insert into days values(1016, 0, 0, '', '', 'Sunday before Nativity – Eve of Nativity', 0, 0, '', '', 0, 0, 0);
+insert into days values(1017, 0, 0, '', '', 'Saturday after Nativity – Saturday before Theophany', 0, 0, '', '', 0, 0, 0);
 insert into days values(1018, 0, 0, '', '', '', 0, 0, '', 'Saturday after Nativity is read on this day', 0, 0, 0);
 insert into days values(1019, 0, 0, '', '', 'Saturday after Nativity', 0, 0, '', '', 0, 0, 0);
 insert into days values(1020, 0, 0, '', '', '', 0, 0, '', 'Sunday after Nativity is read on this day', 0, 0, 0);
@@ -844,8 +844,8 @@ insert into days values(1023, 0, 0, '', '', '', 0, 0, '', 'Sunday before Theopha
 insert into days values(1024, 0, 0, '', '', 'Sunday before Theophany', 0, 0, '', '', 0, 0, 0);
 insert into days values(1025, 0, 0, '', '', 'Royal Hours of Theophany', 0, 0, '', '', 0, 0, 0);
 insert into days values(1026, 0, 0, '', '', 'Eve of Theophany', 0, 0, '', '', 0, 0, 0);
-insert into days values(1027, 0, 0, '', '', 'Saturday before Theophany &ndash; Eve of Theophany', 0, 0, '', '', 0, 0, 0);
-insert into days values(1028, 0, 0, '', '', 'Sunday before Theophany &ndash; Eve of Theophany', 0, 0, '', '', 0, 0, 0);
+insert into days values(1027, 0, 0, '', '', 'Saturday before Theophany – Eve of Theophany', 0, 0, '', '', 0, 0, 0);
+insert into days values(1028, 0, 0, '', '', 'Sunday before Theophany – Eve of Theophany', 0, 0, '', '', 0, 0, 0);
 insert into days values(1029, 0, 0, '', '', 'Saturday after Theophany', 0, 0, '', '', 0, 0, 0);
 insert into days values(1030, 0, 0, '', '', 'Sunday after Theophany', 0, 0, '', '', 0, 0, 0);
 insert into days values(1031, 0, 0, '', '', 'New Martyrs and Confessors of Russia', 0, 0, '', '', 0, 0, 0);
