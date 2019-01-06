@@ -83,7 +83,7 @@ func (self *Bible) LookupWithContext(ctx context.Context, reference string) Pass
 
 	rows, e := self.db.QueryContext(ctx, sql)
 	if e != nil {
-		log.Printf("Got error querying the database for scripture '%s': %#n.", reference, e)
+		log.Printf("Got error querying the database for scripture '%s': %#v.", reference, e)
 		return passage
 	}
 	defer rows.Close()

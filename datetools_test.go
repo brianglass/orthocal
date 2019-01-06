@@ -38,7 +38,7 @@ func TestComputeGregorianPascha(t *testing.T) {
 	for _, expectedTime := range fixture_gregorian_pascha {
 		pascha, e := orthocal.ComputeGregorianPascha(expectedTime.Year())
 		if e != nil {
-			t.Errorf("CalculateGregorianPascha had an error: %#n", e)
+			t.Errorf("CalculateGregorianPascha had an error: %#v", e)
 		}
 		if pascha != expectedTime {
 			t.Errorf("CalculateGregorianPascha should have returned %s but returned %s", expectedTime, pascha)
@@ -70,21 +70,21 @@ func TestConvertJulianToGregorian(t *testing.T) {
 	expected := time.Date(2008, 4, 27, 0, 0, 0, 0, time.Local)
 	actual, e := orthocal.JulianToGregorian(2008, 4, 14)
 	if e != nil {
-		t.Fatalf("ConvertJulianToGregory return error: %#n", e)
+		t.Fatalf("ConvertJulianToGregory return error: %#v", e)
 	}
 
 	if expected != actual {
-		t.Errorf("ConvertJulianToGregory should have returned %s but returned %d", expected, actual)
+		t.Errorf("ConvertJulianToGregory should have returned %v but returned %v", expected, actual)
 	}
 
 	expected = time.Date(2011, 4, 24, 0, 0, 0, 0, time.Local)
 	actual, e = orthocal.JulianToGregorian(2011, 4, 11)
 	if e != nil {
-		t.Fatalf("ConvertJulianToGregory return error: %#n", e)
+		t.Fatalf("ConvertJulianToGregory return error: %#v", e)
 	}
 
 	if expected != actual {
-		t.Errorf("ConvertJulianToGregory should have returned %s but returned %d", expected, actual)
+		t.Errorf("ConvertJulianToGregory should have returned %v but returned %v", expected, actual)
 	}
 }
 
@@ -141,6 +141,6 @@ func TestWeekDayFromPDist(t *testing.T) {
 	expected := orthocal.Wednesday
 	actual := orthocal.WeekDayFromPDist(distance)
 	if actual != expected {
-		t.Errorf("WeekDayFromPDist returned %s for the day but should have returned %s", actual, expected)
+		t.Errorf("WeekDayFromPDist returned %d for the day but should have returned %d", actual, expected)
 	}
 }

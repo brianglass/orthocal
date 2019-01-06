@@ -12,12 +12,12 @@ import (
 func TestDay(t *testing.T) {
 	db, e := sql.Open("sqlite3", "oca_calendar.db")
 	if e != nil {
-		t.Errorf("Got error opening database: %#n.", e)
+		t.Errorf("Got error opening database: %#v.", e)
 	}
 
 	bibledb, e := sql.Open("sqlite3", "kjv.db")
 	if e != nil {
-		t.Errorf("Got error opening database: %#n.", e)
+		t.Errorf("Got error opening database: %#v.", e)
 	}
 	bible := orthocal.NewBible(bibledb)
 

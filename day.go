@@ -128,7 +128,7 @@ func (self *DayFactory) addCommemorations(ctx context.Context, day *Day) {
 	}
 
 	if e != nil {
-		log.Printf("Got error querying the database: %#n.", e)
+		log.Printf("Got error querying the database: %#v.", e)
 		return
 	}
 	defer rows.Close()
@@ -242,7 +242,7 @@ func (self *DayFactory) addReadings(ctx context.Context, day *Day, bible *Bible)
 
 	rows, e := self.db.QueryContext(ctx, query)
 	if e != nil {
-		log.Printf("Got error querying the database: %#n.", e)
+		log.Printf("Got error querying the database: %#v.", e)
 		return
 	}
 	defer rows.Close()

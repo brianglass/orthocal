@@ -11,7 +11,7 @@ func TestComputePDists(t *testing.T) {
 	pascha := orthocal.GregorianDateToJDN(2018, 4, 8)
 
 	if pascha != year.Pascha {
-		t.Errorf("Got incorrect date for Pascha: %s. Should be %s", year.Pascha, pascha)
+		t.Errorf("Got incorrect date for Pascha: %d. Should be %d", year.Pascha, pascha)
 	}
 
 	theophany := orthocal.GregorianDateToJDN(2019, 1, 6) - pascha
@@ -75,7 +75,7 @@ func TestComputePDistsSixth(t *testing.T) {
 	pascha := orthocal.GregorianDateToJDN(2016, 5, 1)
 
 	if pascha != year.Pascha {
-		t.Errorf("Got incorrect date for Pascha: %s. Should be %s", year.Pascha, pascha)
+		t.Errorf("Got incorrect date for Pascha: %d. Should be %d", year.Pascha, pascha)
 	}
 
 	fatherssix := orthocal.GregorianDateToJDN(2016, 7, 17) - pascha
@@ -92,7 +92,7 @@ func TestComputeReserves(t *testing.T) {
 
 	expected := []int{266, 161, 168}
 	if !reflect.DeepEqual(year.Reserves, expected) {
-		t.Errorf("Got incorrect list of reserves for Sunday of the Publican and Pharisee: %s. Should be %s", year.Reserves, expected)
+		t.Errorf("Got incorrect list of reserves for Sunday of the Publican and Pharisee: %v. Should be %v", year.Reserves, expected)
 	}
 
 	if year.ExtraSundays != 3 {

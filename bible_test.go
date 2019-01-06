@@ -11,7 +11,7 @@ import (
 func TestScriptureLookup(t *testing.T) {
 	db, e := sql.Open("sqlite3", "kjv.db")
 	if e != nil {
-		t.Errorf("Got error opening database: %#n.", e)
+		t.Errorf("Got error opening database: %#v.", e)
 	}
 	bible := orthocal.NewBible(db)
 
