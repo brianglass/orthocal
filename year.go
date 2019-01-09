@@ -191,7 +191,7 @@ func (self *Year) computeFloats() {
 		self.addFloat(1015, self.Nativity-1)
 	case sunBefore:
 		self.addFloat(1013, self.Nativity-3)
-		self.addFloat(1011, sunBefore)
+		self.addFloat(1011, satBefore)
 		self.addFloat(1016, self.Nativity-1)
 	default:
 		self.addFloat(1014, self.Nativity-1)
