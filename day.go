@@ -5,10 +5,14 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 )
+
+var compositeRe = regexp.MustCompile(`Composite (\d+)`)
 
 type Day struct {
 	PDist             int       `json:"pascha_distance"`
@@ -252,9 +256,19 @@ func (self *DayFactory) addReadings(ctx context.Context, day *Day, bible *Bible)
 		var reading Reading
 		rows.Scan(&reading.Source, &reading.Description, &reading.Book, &reading.Display, &reading.ShortDisplay)
 		if bible != nil {
-			passage := bible.Lookup(reading.ShortDisplay)
-			if passage != nil {
-				reading.Passage = passage
+			// Check for a composite reading
+			groups := compositeRe.FindStringSubmatch(reading.Display)
+			if len(groups) > 1 {
+				num, _ := strconv.Atoi(groups[1])
+				reading.Passage = self.LookupComposite(num)
+			}
+
+			// If there is no composite, lookup the scripture reference
+			if len(reading.Passage) == 0 {
+				passage := bible.Lookup(reading.ShortDisplay)
+				if passage != nil {
+					reading.Passage = passage
+				}
 			}
 		}
 		day.Readings = append(day.Readings, reading)
@@ -416,4 +430,24 @@ func (self *DayFactory) addFastingAdjustments(day *Day) {
 
 	day.FastLevelDesc = FastLevels[day.FastLevel]
 	day.FastExceptionDesc = FastExceptions[day.FastException]
+}
+
+func (self *DayFactory) LookupComposite(num int) (passage Passage) {
+	var verse Verse
+
+	sql := "select reading from composites where composite_num = ?"
+
+	rows, e := self.db.Query(sql, num)
+	if e != nil {
+		log.Printf("Got error querying the database for composite %d: %#v.", num, e)
+		return passage
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		rows.Scan(&verse.Content)
+		passage = append(passage, verse)
+	}
+
+	return passage
 }

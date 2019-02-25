@@ -208,6 +208,31 @@ func TestDay(t *testing.T) {
 		}
 	})
 
+	t.Run("Composites", func(t *testing.T) {
+		testCases := []struct {
+			day     *orthocal.Day
+			reading int
+			length  int
+		}{
+			{factory.NewDay(2019, 2, 24, bible), 0, 1488}, // 3
+			{factory.NewDay(2019, 2, 24, bible), 1, 1357}, // 8
+			{factory.NewDay(2019, 2, 24, bible), 2, 1306}, // 9
+			{factory.NewDay(2019, 2, 27, bible), 0, 8545}, // 2 This one is defaulting to the reference
+		}
+
+		for _, tc := range testCases {
+			t.Run("Day", func(t *testing.T) {
+				length := 0
+				for _, passage := range tc.day.Readings[tc.reading].Passage {
+					length += len(passage.Content)
+				}
+				if length != tc.length {
+					t.Errorf("First composite reading for %d/%d/%d is %d long but should be %d.", tc.day.Month, tc.day.Day, tc.day.Year, length, tc.length)
+				}
+			})
+		}
+	})
+
 	/*
 		// today := time.Now()
 		today := time.Date(2019, 1, 2, 0, 0, 0, 0, time.UTC)
