@@ -446,6 +446,8 @@ func (self *DayFactory) LookupComposite(num int) (passage Passage) {
 
 	if rows.Next() {
 		rows.Scan(&verse.Content)
+		verse.Chapter = 1
+		verse.Verse = 1
 		passage = append(passage, verse)
 	}
 
