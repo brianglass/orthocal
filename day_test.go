@@ -214,10 +214,10 @@ func TestDay(t *testing.T) {
 			reading int
 			length  int
 		}{
+			{factory.NewDay(2019, 2, 27, bible), 0, 1380}, // 2
 			{factory.NewDay(2019, 2, 24, bible), 0, 1488}, // 3
 			{factory.NewDay(2019, 2, 24, bible), 1, 1357}, // 8
 			{factory.NewDay(2019, 2, 24, bible), 2, 1306}, // 9
-			{factory.NewDay(2019, 2, 27, bible), 0, 8545}, // 2 This one is defaulting to the reference
 		}
 
 		for _, tc := range testCases {
