@@ -996,7 +996,7 @@ insert into pericopes values('189', 'OT', 'Composite 14 - 3 [1] Kings 19.19, 20,
 insert into pericopes values('190', 'OT', 'Composite 15 - Exodus 33.11-23; 34.4-6, 8', 'Exod 33.11-23; 34.4-6, 8', 'Transfiguration', '', '', '', 'Comp_15001_15004', '', 0);
 insert into pericopes values('191', 'OT', 'Composite 16 - Isaiah 63.15-64.5, 8-9', 'Isa 63.15-64.5, 8-9', 'Demetrius', '', '', '', 'Comp_16001_16003', '', 0);
 insert into pericopes values('192', 'OT', 'Composite 17 - Exodus 40:1-5, 9-10, 16, 34-35', 'Exod 40:1-5, 9-10, 16, 34-35', 'Entrance Theotokos', '', '', '', 'Comp_17001_17003', '', 0);
-insert into pericopes values('193', 'OT', 'Composite 18 - 3 [1] Kings 7:51-8:7, 9-11', '3 Kgs 7:51-8:7, 9-11', 'Entrance Theotokos', '', '', '', 'Comp_18001_18003', '', 0);
+insert into pericopes values('193', 'OT', 'Composite 18 - 3 [1] Kings 7:51-8:2, 8:4-7, 9-11', '3 Kgs 7:51-8:2, 8:4-7, 9-11', 'Entrance Theotokos', '', '', '', 'Comp_18001_18003', '', 0);
 insert into pericopes values('194', 'OT', 'Composite 19 - Micah 4.2-3, 5; 6.2-5, 8; 5.4, 5', 'Micah 4.2-3, 5; 6.2-5, 8; 5.4, 5', 'Mid-Pentecost', '', '', '', 'Comp_19001_19003', '', 0);
 insert into pericopes values('195', 'OT', 'Composite 20 - Isaiah 55.1; 12.3-4; 55.2-13', 'Isa 55.1; 12.3-4; 55.2-13', 'Mid-Pentecost', '', '', '', 'Comp_20001_20004', '', 0);
 insert into pericopes values('196', 'OT', 'Composite 21 - Isaiah 62.10-63.3, 7-9', 'Isa 62.10-63.3, 7-9', 'Ascension', '', '', '', 'Comp_21001_21004', '', 0);
