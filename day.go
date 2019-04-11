@@ -14,6 +14,20 @@ import (
 
 var compositeRe = regexp.MustCompile(`Composite (\d+)`)
 
+type Verse struct {
+	Book    string `json:"book"`
+	Chapter uint16 `json:"chapter"`
+	Verse   uint16 `json:"verse"`
+	Content string `json:"content"`
+}
+
+type Passage []Verse
+
+type Bible interface {
+	Lookup(reference string) Passage
+	LookupWithContext(ctx context.Context, reference string) Passage
+}
+
 type Day struct {
 	PDist             int       `json:"pascha_distance"`
 	JDN               int       `json:"julian_day_number"`
@@ -67,11 +81,11 @@ func NewDayFactory(useJulian bool, doJump bool, db *sql.DB) *DayFactory {
 	return &self
 }
 
-func (self *DayFactory) NewDay(year, month, day int, bible *Bible) *Day {
+func (self *DayFactory) NewDay(year, month, day int, bible Bible) *Day {
 	return self.NewDayWithContext(context.Background(), year, month, day, bible)
 }
 
-func (self *DayFactory) NewDayWithContext(ctx context.Context, year, month, day int, bible *Bible) *Day {
+func (self *DayFactory) NewDayWithContext(ctx context.Context, year, month, day int, bible Bible) *Day {
 	var d Day
 	var pdist, pyear int
 	var date time.Time
@@ -181,7 +195,7 @@ func (self *DayFactory) addCommemorations(ctx context.Context, day *Day) {
 	day.FeastLevelDesc = FeastLevels[overallFeastLevel]
 }
 
-func (self *DayFactory) addReadings(ctx context.Context, day *Day, bible *Bible) {
+func (self *DayFactory) addReadings(ctx context.Context, day *Day, bible Bible) {
 	var conditionals []string
 
 	ePDist, gPDist := self.getAdjustedPDists(day)

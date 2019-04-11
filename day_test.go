@@ -3,6 +3,7 @@ package orthocal_test
 import (
 	"database/sql"
 	// "encoding/json"
+	"github.com/brianglass/english_bible"
 	"github.com/brianglass/orthocal"
 	_ "github.com/mattn/go-sqlite3"
 	"testing"
@@ -19,7 +20,7 @@ func TestDay(t *testing.T) {
 	if e != nil {
 		t.Errorf("Got error opening database: %#v.", e)
 	}
-	bible := orthocal.NewBible(bibledb)
+	bible := english_bible.NewBible(bibledb)
 
 	factory := orthocal.NewDayFactory(false, true, db)
 
