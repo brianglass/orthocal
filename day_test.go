@@ -6,6 +6,7 @@ import (
 	"github.com/brianglass/english_bible"
 	"github.com/brianglass/orthocal"
 	_ "github.com/mattn/go-sqlite3"
+	"go/build"
 	"testing"
 	// "time"
 )
@@ -16,7 +17,8 @@ func TestDay(t *testing.T) {
 		t.Errorf("Got error opening database: %#v.", e)
 	}
 
-	bibledb, e := sql.Open("sqlite3", "kjv.db")
+	biblePath := build.Default.GOPATH + "/src/github.com/brianglass/english_bible/bible.db"
+	bibledb, e := sql.Open("sqlite3", biblePath)
 	if e != nil {
 		t.Errorf("Got error opening database: %#v.", e)
 	}
